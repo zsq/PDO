@@ -1,0 +1,23 @@
+SortPackage(S,A) : Exports == Implementation where
+  S: Object
+  A: IndexedAggregate(Integer, S)
+    with (finiteAggregate; shallowlyMutable)
+
+  Exports == with
+    bubbleSort!: (A,(S,S) -> Boolean) -> A
+    insertionSort!: (A,(S,S) -> Boolean) -> A
+
+  Implementation == add
+    bubbleSort!(m,f) ==
+      n := #m
+      for i in 1..(n-1) repeat
+        for j in n..(i+1) by -1 repeat
+          if f(m.j,m.(j-1)) then swap!(m,j,j-1)
+      m
+
+    insertionSort!(m,f) ==
+      for i in 2..#m repeat
+        j := i
+        while j>1 and f(m.j, m.(j-1)) repeat
+          swap!(m, j, j-1)
+      m
