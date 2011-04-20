@@ -1,3 +1,8 @@
 PDO is a FriCAS implementation of Psuedo-differential operator ring.
+This project is supported by Undergraduate Research Project of China
+Agricultural University.
 
-The project is support by URP of CAU
+Directory 
+------
+vim/ 			vim syntax highlight
+

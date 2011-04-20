@@ -1,0 +1,7 @@
+mv fricas.vim to ~/.vim/syntax/
+
+In vim, use 
+
+:set filetype=fricas
+
+to invoke
