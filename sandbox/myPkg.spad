@@ -8,5 +8,4 @@ MyPackage(R) : Exports == Implementation where
 
     Implementation == add
 	
-        commutate(a,b) == 
-	    a*b-b*a
+        commutate(a,b) == a*b-b*a

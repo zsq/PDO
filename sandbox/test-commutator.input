@@ -4,9 +4,9 @@
 f:=(operator 'f)[x]
 _∂ : EXPR INT -> EXPR INT := f +->D(f,x)
 DD : LODO(EXPR INT, _∂) 
-DD:= D()
+DD := D()
 L := DD^2 + f
-M :=DD^3 + 3/2 * f * DD + 3/4*D(f,x)
+M := DD^3 + 3/2 * f * DD + 3/4*D(f,x)
 
 
 commutate(L,M)
