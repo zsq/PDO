@@ -1,0 +1,49 @@
+2237                (MAKEPROP '|MyPackage| '|infovec|
+                              (LIST
+                               '#(NIL NIL NIL NIL NIL NIL (|local| |#1|)
+                                  (0 . *) (6 . -) |MYPKG;commutate;3R;1|)
+                               '#(|commutate| 12) 'NIL
+                               (CONS (|makeByteWordVec2| 1 'NIL)
+                                     (CONS '#()
+                                           (CONS '#()
+                                                 (|makeByteWordVec2| 9
+                                                                     '(2 6 0 0
+                                                                       0 7 2 6
+                                                                       0 0 0 8
+                                                                       2 0 6 6
+                                                                       6 9)))))
+                               '|lookupComplete|))
+(SETQ |$CategoryFrame|
+        (|put| '|MyPackage| '|isFunctor|
+               '(((|commutate| (|#1| |#1| |#1|)) T (ELT $ 9)))
+               (|addModemap| '|MyPackage| '(|MyPackage| |#1|)
+                             '((CATEGORY |package|
+                                (SIGNATURE |commutate| (|#1| |#1| |#1|)))
+                               (|Ring|))
+                             T '|MyPackage|
+                             (|put| '|MyPackage| '|mode|
+                                    '(|Mapping|
+                                      (CATEGORY |package|
+                                       (SIGNATURE |commutate|
+                                        (|#1| |#1| |#1|)))
+                                      (|Ring|))
+                                    |$CategoryFrame|))))
+(|MyPackage| R)
+|package|
+(((|MyPackage| |#1|)
+  (CATEGORY |package| (SIGNATURE |commutate| (|#1| |#1| |#1|))) (|Ring|))
+ (T |MyPackage|))
+(CATEGORY |package| (SIGNATURE |commutate| (|#1| |#1| |#1|)))
+"/Users/liuxiaojun/Sources/PDO/sandbox/myPkg.spad"
+((|commutate| (*1 *2 *2 *2)
+  (AND (|isDomain| *1 (|MyPackage| *2)) (|ofCategory| *2 (|Ring|)))))
+((|commutate| ((|#1| |#1| |#1|) 9)))
+((|MYPKG;commutate;3R;1| R R R))
+MYPKG
+(|MyPackage| (NIL (|commutate| ((6 6 6) 9))))
+(("slot1Info" 0 2191) ("documentation" 0 NIL) ("ancestors" 0 NIL)
+ ("parents" 0 NIL) ("abbreviation" 0 2185) ("predicates" 0 NIL)
+ ("signaturesAndLocals" 0 2152) ("superDomain" 0 NIL) ("operationAlist" 0 2115)
+ ("modemaps" 0 2017) ("sourceFile" 0 1966) ("constructorCategory" 0 1904)
+ ("constructorModemap" 0 1791) ("constructorKind" 0 1781)
+ ("constructorForm" 0 1765) ("compilerInfo" 0 977) ("loadTimeStuff" 0 20))

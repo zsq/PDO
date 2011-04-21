@@ -1,0 +1,8 @@
+f:=(operator 'f)[x]
+d : LODO(EXPR INT, f +-> D(f,x))
+d := D()
+L := d^2 + f
+M :=d^3 + 3/2 * f * d + 3/4*D(f,x)
+
+
+commutate(L,M)
