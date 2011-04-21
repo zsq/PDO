@@ -5,10 +5,10 @@
   (SPADCALL (SPADCALL |a| |b| (QREFELT $ 7)) (SPADCALL |b| |a| (QREFELT $ 7))
             (QREFELT $ 8))) 
 
-(DEFUN |MyPackage| (#1=#:G712)
+(DEFUN |MyPackage| (#1=#:G698)
   (PROG ()
     (RETURN
-     (PROG (#2=#:G713)
+     (PROG (#2=#:G699)
        (RETURN
         (COND
          ((LETT #2#
