@@ -1,0 +1,11 @@
+)abbrev package MYPKG MyPackage
+
+MyPackage(R) : Exports == Implementation where
+    R: Ring
+
+    Exports == with
+	commutate: (R,R) -> R
+
+    Implementation == add
+	
+        commutate(a,b) == a*b-b*a
