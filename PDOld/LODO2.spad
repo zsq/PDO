@@ -1,0 +1,296 @@
+-- ****************************                                                 
+-- ***** File: LODO2.spad *****                                                 
+-- ****************************                                                 
+--                                                                              
+-- Defines linear ordinary differential operators with multivariate functions   
+-- as coefficients acting on these. (Compare with LODO)                         
+--                                                                              
+--                                                                              
+-- (C) 1992  Werner M. Seiler                                                   
+--                                                                              
+                                                                                
+)abb domain  CHDER   ChooseDerivation                                           
+)abb domain  SLMD    SelfLeftModuleWithDerivation                               
+)abb domain  LODO2   LinearOrdinaryDifferentialOperator2                        
+                                                                                
+                                                                                
+Sy  ==> Symbol                                                                  
+DR  ==> DifferentialRing                                                        
+NNI ==> NonNegativeInteger                                                      
+OUT ==> OutputForm                                                              
+PDR ==> PartialDifferentialRing Sy                                              
+                                                                                
+                                                                                
+-- ------------------------ --                                                  
+-- ChooseDerivation (CHDER) --                                                  
+-- ------------------------ --                                                  
+                                                                                
+ChooseDerivation(R:PDR,DVar:Sy) : Cat == Def where                              
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiom{ChooseDerivation} "coerces" a partial differential ring to a        
+  ++ differential ring by choosing a specific derivation.                       
+  ++ The partial differentiations are preserved.                                
+  ++                                                                            
+                                                                                
+                                                                                
+  Cat ==> Join(DR,PDR) with                                                     
+                                                                                
+                                                                                
+    coerce : $ -> R                                                             
+    coerce : R -> $                                                             
+                                                                                
+    if R has Field then Field                                                   
+                                                                                
+                                                                                
+  Def ==> R add                                                                 
+                                                                                
+                                                                                
+    Rep := R                                                                    
+                                                                                
+    coerce(r:$):R == r@Rep                                                      
+                                                                                
+    coerce(r:R):$ == r                                                          
+                                                                                
+    differentiate(r:$):$ == differentiate(r,DVar)$Rep                           
+                                                                                
+                                                                                
+-- ----------------------------------- --                                       
+-- SelfLeftModuleWithDerivation (SLMD) --                                       
+-- ----------------------------------- --                                       
+                                                                                
+-- This strange domain is only necessary because LODO needs as second           
+-- parameter a left module of the first. As in many applications the            
+-- function space on which the LODOs operate is identical with the              
+-- coefficient space, this domain provides the needed left module.              
+                                                                                
+SelfLeftModuleWithDerivation(R:DR) : Cat == Def where                           
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiom{SelftLeftModuleWithDerivation} introduces the left R-module         
+  ++  given by R itself and "extends" the derivation of R to the left module.   
+  ++                                                                            
+                                                                                
+  Cat ==> LeftModule R with                                                     
+                                                                                
+                                                                                
+    coerce : $ -> R                                                             
+    coerce : R -> $                                                             
+                                                                                
+    differentiate : $ -> $                                                      
+                                                                                
+    -- if R has PDR then PDR                                                    
+                                                                                
+                                                                                
+  Def ==> R add                                                                 
+                                                                                
+                                                                                
+    Rep := R                                                                    
+                                                                                
+    coerce(r:$):R == r@Rep                                                      
+                                                                                
+    coerce(r:R):$ == r                                                          
+                                                                                
+    r:R * s:$ == r *$Rep s::Rep                                                 
+                                                                                
+    differentiate(r:$):$ == differentiate(r)$Rep                                
+                                                                                
+    -- if R has PDR then                                                        
+    --   differentiate(r:$,s:Sy):$ == differentiate(r,s)$Rep                    
+                                                                                
+                                                                                
+-- ------------------------------------------- --                               
+-- LinearOrdinaryDifferentialOperator2 (LODO2) --                               
+-- ------------------------------------------- --                               
+                                                                                
+-- This domain is very similiar to LODO. The main differences are that          
+-- elements of LODO2 operates always on their coefficient space and this        
+-- space is a partial differential ring. The partial differentiation            
+-- is extended to the differential operators. Furthermore, LODO2 takes          
+-- the name of the differential operator as argument.                           
+                                                                                
+LinearOrdinaryDifferentialOperator2(CoefDom:PDR,DVar:Sy,DOp:Sy) : Cat == Def _  
+                                                                                
+ where                                                                          
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiom{LinearOrdinaryDifferentialOperator2} implements linear              
+  ++ ordinary differential operators with coefficients from a                   
+  ++ \axiomType{PartialDifferentialRing} acting on elements of this             
+  ++ ring.                                                                      
+  ++                                                                            
+                                                                                
+  CD   ==> ChooseDerivation(CoefDom,DVar)                                       
+  SLM  ==> SelfLeftModuleWithDerivation CD                                      
+  LDO  ==> LinearOrdinaryDifferentialOperator(CD,SLM)                           
+  UPD  ==> UnivariatePolynomial(DOp,CoefDom)                                    
+                                                                                
+                                                                                
+  Cat ==> Join(MonogenicLinearOperator CoefDom,_                                
+               RetractableTo CoefDom,PDR) with                                  
+                                                                                
+                                                                                
+    D : () -> $                                                                 
+      ++ \axiom{D()} yields the differential operator.                          
+                                                                                
+    elt : ($,SLM) -> SLM                                                        
+      ++ \axiom{elt(l,f)} applies the LODO \axiom{l} to an element \axiom{f}    
+      ++ of \axiom{CoefDom} viewed as left module of itself.                    
+                                                                                
+    elt : ($,CoefDom) -> CoefDom                                                
+      ++ \axiom{elt(l,f)} applies the LODO \axiom{f} to an element of           
+      ++ \axiom{CoefDom}.                                                       
+                                                                                
+    commutator : ($,$) -> $                                                     
+      ++ \axiom{commutator(l,m)} computes the commutator \axiom{l*m-m*l} of the 
+      ++ two LODOs \axiom{l,m}.                                                 
+                                                                                
+    coefficients : $ -> List CoefDom                                            
+      ++ \axiom{coefficients(l)} yields a list of all coefficients of \axiom{l} 
+      ++ including zeros.                                                       
+                                                                                
+    coerce : CoefDom -> $                                                       
+      ++ \axiom{coerce(c)} yields constant LODO.                                
+                                                                                
+    coerce : $ -> UPD                                                           
+      ++ \axiom{coerce(l)} coerces the LODO \axiom{l} to a polynomial in DOp.   
+                                                                                
+    coerce : UPD -> $                                                           
+      ++ \axiom{coerce(p)} coerces the polynomial \axiom{p} in DOp to a LODO.   
+                                                                                
+    if CoefDom has (with indexedDiff : (CoefDom,Sy) -> CoefDom) then            
+                                                                                
+      indexedDiff : ($,Sy) -> $                                                 
+        ++ \axiom{implicitDiff(l,v)} differentiates with respect to the         
+        ++ indexed variable \axiom{v}.                                          
+                                                                                
+    if CoefDom has (with "/" : (CoefDom,CoefDom) -> CoefDom) then               
+                                                                                
+      "/" : ($,CoefDom) -> $                                                    
+        ++ \axiom{l/c} divides every coefficient of \axiom{l} by \axiom{c}.     
+                                                                                
+    if CoefDom has Field then                                                   
+                                                                                
+      ldiv : ($,$) -> Record(quotient:$,remainder:$)                            
+        ++ \axiom{ldiv(l,m)} performs left division.                            
+                                                                                
+      ldquo : ($,$) -> $                                                        
+        ++ \axiom{ldquo(l,m)} yields the left quotient.                         
+                                                                                
+      ldrem : ($,$) -> $                                                        
+        ++ \axiom{ldrem(l,m)} yields the left remainder.                        
+                                                                                
+      ldexquo : ($,$) -> Union($,"failed")                                      
+        ++ \axiom{ldexquo(l,m)} yields the left exact quotient or               
+        ++ \axiom{"failed"}.                                                    
+                                                                                
+      rdiv : ($,$) -> Record(quotient:$,remainder:$)                            
+        ++ \axiom{rdiv(l,m)} performs right division.                           
+                                                                                
+      rdquo : ($,$) -> $                                                        
+        ++ \axiom{rdquo(l,m)} yields the right quotient.                        
+                                                                                
+      rdrem : ($,$) -> $                                                        
+        ++ \axiom{rdrem(l,m)} yields the right remainder.                       
+                                                                                
+      rdexquo : ($,$) -> Union($,"failed")                                      
+        ++ \axiom{rdexquo(l,m)} yields the right exact quotient or              
+        ++ \axiom{"failed"}.                                                    
+                                                                                
+      lgcd : ($,$) -> $                                                         
+        ++ \axiom{lgcd(l,m)} computes the left gcd.                             
+                                                                                
+      llcm : ($,$) -> $                                                         
+        ++ \axiom{llcm(l,m)} computes the left lcm.                             
+                                                                                
+      rgcd : ($,$) -> $                                                         
+        ++ \axiom{rgcd(l,m)} computes the right gcd.                            
+                                                                                
+      rlcm : ($,$) -> $                                                         
+        ++ \axiom{rlcm(l,m)} computes the right lcm.                            
+                                                                                
+    if CoefDom has commutative("*") and CoefDom has constant(deriv) then        
+      commutative("*")                                                          
+                                                                                
+                                                                                
+  Def ==> LDO add                                                               
+                                                                                
+                                                                                
+    Rep := LDO                                                                  
+                                                                                
+    -- Most procedures are inherited. For all procedures of LDO which yield     
+    -- a result out of the left module, a version is provided whose result      
+    -- comes from the coefficient space. As the name of the differential        
+    -- operator is a parameter of LODO2, a different polynomial type is used    
+    -- as "representation": Thus the coerce to OutputForm must be changed.      
+                                                                                
+    -- ---------------------------                                              
+    -- Operations using CoefDom --                                              
+    -- ------------------------ --                                              
+                                                                                
+    coerce(c:CoefDom):$ == c::CD::$                                             
+                                                                                
+                                                                                
+    c:CoefDom * l:$ == c::CD * l                                                
+                                                                                
+                                                                                
+    coefficient(d:$,n:NNI):CoefDom == coefficient(d,n)$Rep ::CoefDom            
+                                                                                
+                                                                                
+    retractIfCan(d:$):Union(CoefDom,"failed") ==                                
+      degree(d)>0 => "failed"                                                   
+      coefficient(d,0)                                                          
+                                                                                
+                                                                                
+    elt(d:$,f:CoefDom):CoefDom == elt(d,f::CD::SLM)::CD::CoefDom                
+                                                                                
+                                                                                
+    if CoefDom has (with "/" : (CoefDom,CoefDom) -> CoefDom) then               
+                                                                                
+      l:$ / c:CoefDom ==                                                        
+        zero? c => error "Division by 0"                                        
+        (1/c)$CoefDom * l                                                       
+                                                                                
+                                                                                
+    -- ----------------------- --                                               
+    -- "Polynomial" Operations --                                               
+    -- ----------------------- --                                               
+                                                                                
+    monomial(c:CoefDom,n:NNI):$ == monomial(c::CD,n)$Rep                        
+                                                                                
+                                                                                
+    coerce(d:$):UPD ==                                                          
+      +/[monomial(coefficient(d,i),i)$UPD for i in 0..degree d]                 
+                                                                                
+                                                                                
+    coerce(p:UPD):$ ==                                                          
+      +/[monomial(coefficient(p,i),i)$$ for i in 0..degree p]                   
+                                                                                
+                                                                                
+    coefficients(d:$):List CoefDom == coefficients(d::UPD)                      
+                                                                                
+                                                                                
+    coerce(d:$):OUT == d::UPD::OUT                                              
+                                                                                
+                                                                                
+    -- ------------------------- --                                             
+    -- Operations missing in LDO --                                             
+    -- ------------------------- --                                             
+                                                                                
+    commutator(d:$,e:$):$ == d*e - e*d                                          
+                                                                                
+                                                                                
+    differentiate(d:$,s:Sy):$ ==                                                
+      s=DVar => D()*d                                                           
+      +/[monomial(differentiate(coefficient(d,i),s),i)$$ _                      
+         for i in 0..degree d]                                                  
+                                                                                
+    if CoefDom has (with indexedDiff : (CoefDom,Sy) -> CoefDom) then            
+                                                                                
+      indexedDiff(d:$,v:Sy):$ ==                                                
+        +/[monomial(indexedDiff(coefficient(d,i),v),i)$$ _                      
+           for i in 0..degree d]                                                
+

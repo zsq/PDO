@@ -1,0 +1,371 @@
+-- *********************                                                        
+-- ***** TEST DECK *****                                                        
+-- *********************                                                        
+                                                                                
+-- *********************************                                            
+-- ***** Input File: KdV.input *****                                            
+-- *********************************                                            
+)clear all                                                                      
+                                                                                
+)load INDFUN                                                                    
+)load DEPFUN                                                                    
+)load CHDER                                                                     
+)load SLMD                                                                      
+)load LODO2                                                                     
+)load PDO                                                                       
+)load PDOALG                                                                    
+)load LAX                                                                       
+)load LAXH                                                                      
+                                                                                
+)set message time on                                                            
+)spool KdV.output                                                               
+)set stream calculate 5                                                         
+                                                                                
+ctyp:=DependentFunction()                                                       
+ltyp:=LinearOrdinaryDifferentialOperator2(ctyp,'x,'D)                           
+ptyp:=PseudoDifferentialOperator(ctyp,'x,'D)                                    
+algpack:=PDOAlgebra(ctyp,'x,'D)                                                 
+laxpack:=LaxEquation(ctyp,ltyp,'t,'x,'D)                                        
+laxhpack:=LaxHierarchy(ctyp,'t,'x,'D)                                           
+                                                                                
+u:ctyp:=function('u,['x,'t])                                                    
+L:ltyp:=D()**2+u                                                                
+M:ptyp:=nthRoot(L)$algpack                                                      
+evalLax(L,pos(M**3))$laxpack                                                    
+conservedDensities(M)$laxhpack                                                  
+                                                                                
+)spool                                                                          
+)set message time off                                                           
+                                                                                
+-- **********************************                                           
+-- ***** Output File: KdV.output*****                                           
+-- **********************************                                           
+Starts dribbling to KdV.output (1993/8/17, 9:58:15).                            
+)set stream calculate 5                                                         
+                                                                                
+                                                                                
+ctyp:=DependentFunction()                                                       
+                                                                                
+                                                                                
+   (1)  DependentFunction                                                       
+                                                                 Type: Domain   
+                                       Time: 0.01 (IN) + 0.01 (OT) = 0.02 sec   
+ltyp:=LinearOrdinaryDifferentialOperator2(ctyp,'x,'D)                           
+                                                                                
+                                                                                
+   (2)  LinearOrdinaryDifferentialOperator2(DependentFunction,x,D)              
+                                                                 Type: Domain   
+                                       Time: 0.01 (IN) + 0.01 (OT) = 0.02 sec   
+ptyp:=PseudoDifferentialOperator(ctyp,'x,'D)                                    
+                                                                                
+                                                                                
+   (3)  PseudoDifferentialOperator(DependentFunction,x,D)                       
+                                                                 Type: Domain   
+                                       Time: 0.01 (IN) + 0.02 (OT) = 0.03 sec   
+algpack:=PDOAlgebra(ctyp,'x,'D)                                                 
+                                                                                
+                                                                                
+   (4)  PDOAlgebra(DependentFunction,x,D)                                       
+                                                                 Type: Domain   
+                                       Time: 0.01 (IN) + 0.01 (OT) = 0.02 sec   
+laxpack:=LaxEquation(ctyp,ltyp,'t,'x,'D)                                        
+                                                                                
+                                                                                
+   (5)                                                                          
+  LaxEquation(DependentFunction,LinearOrdinaryDifferentialOperator2(DependentFu 
+  nction,x,D),t,x,D)                                                            
+                                                                 Type: Domain   
+                                                   Time: 0.03 (IN) = 0.03 sec   
+                                                                                
+u:ctyp:=function('u,['x,'t])                                                    
+                                                                                
+                                                                                
+   (6)  u(x,t)                                                                  
+                                                      Type: DependentFunction   
+                           Time: 0.95 (IN) + 0.18 (EV) + 1.51 (OT) = 2.64 sec   
+L:ltyp:=D()**2+u                                                                
+                                                                                
+                                                                                
+         2                                                                      
+   (7)  D  + u(x,t)                                                             
+             Type: LinearOrdinaryDifferentialOperator2(DependentFunction,x,D)   
+                           Time: 0.28 (IN) + 0.33 (EV) + 0.50 (OT) = 1.11 sec   
+M:ptyp:=nthRoot(L)$algpack                                                      
+                                                                                
+                                                                                
+                                                             2                  
+                          u  (x,t)        u    (x,t) - u(x,t)                   
+            u(x,t)  - 1    ,1       - 2    ,1,1                 - 3      - 4    
+   (8)  D + ------ D    - -------- D    + -------------------- D    + O(D   )   
+              2              4                     8                            
+                      Type: PseudoDifferentialOperator(DependentFunction,x,D)   
+               Time: 0.31 (IN) + 1.83 (EV) + 4.47 (OT) + 1.34 (GC) = 7.95 sec   
+evalLax(L,pos(M**3))$laxpack                                                    
+                                                                                
+                                                                                
+        - u      (x,t) + 4u  (x,t) - 6u(x,t)u  (x,t)                            
+           ,1,1,1          ,2                ,1                                 
+   (9)  --------------------------------------------                            
+                             4                                                  
+             Type: LinearOrdinaryDifferentialOperator2(DependentFunction,x,D)   
+                           Time: 0.10 (IN) + 1.23 (EV) + 0.20 (OT) = 1.53 sec   
+conservedDensities(M)$laxpack                                                   
+                                                                                
+                                                                                
+   (10)                                                                         
+                                   2                                            
+               u    (x,t) + 3u(x,t)                                             
+    u(x,t)      ,1,1                                                            
+   [------, 0, ---------------------, 0,                                        
+      2                  8                                                      
+                                                   2           3                
+    u        (x,t) + 10u(x,t)u    (x,t) + 5u  (x,t)  + 10u(x,t)                 
+     ,1,1,1,1                 ,1,1          ,1                                  
+    ------------------------------------------------------------, ...]          
+                                 32                                             
+                                               Type: Stream DependentFunction   
+                         Time: 0.01 (IN) + 0.02 (EV) + 12.31 (OT) = 12.34 sec   
+                                                                                
+)spool                                                                          
+                                                                                
+-- ********************************                                             
+-- ***** Input File: KP.input *****                                             
+-- ********************************                                             
+)clear all                                                                      
+                                                                                
+)load INDFUN                                                                    
+)load DEPFUN                                                                    
+)load CHDER                                                                     
+)load SLMD                                                                      
+)load LODO2                                                                     
+)load PDO                                                                       
+)load PDOALG                                                                    
+)load LAX                                                                       
+                                                                                
+)set stream calculate 3                                                         
+)set message time on                                                            
+                                                                                
+)spool KP.output                                                                
+                                                                                
+ctyp := DEPFUN()                                                                
+ptyp := PDO(ctyp,'x,'D)                                                         
+ltyp := LODO2(ctyp,'x,'D)                                                       
+laxpack := LAX(ctyp,ltyp,'t,'x,'D)                                              
+                                                                                
+L : ptyp := D()+generate(functionStream(u,[],['x,'t],-1,-1),-1)                 
+                                                                                
+B : NonNegativeInteger -> ltyp                                                  
+B := n +-> pos(L**n)$ptyp                                                       
+                                                                                
+evalZakharovShabat(B,2,3)$laxpack                                               
+                                                                                
+)spool                                                                          
+                                                                                
+-- **********************************                                           
+-- ***** Output File: KP.output *****                                           
+-- **********************************                                           
+Starts dribbling to KP.output (1993/8/17, 10:1:21).                             
+                                                                                
+ctyp := DEPFUN()                                                                
+                                                                                
+                                                                                
+   (1)  DependentFunction                                                       
+                                                                 Type: Domain   
+                                                   Time: 0.01 (OT) = 0.01 sec   
+ptyp := PDO(ctyp,'x,'D)                                                         
+                                                                                
+                                                                                
+   (2)  PseudoDifferentialOperator(DependentFunction,x,D)                       
+                                                                 Type: Domain   
+                                       Time: 0.02 (IN) + 0.01 (OT) = 0.03 sec   
+ltyp := LODO2(ctyp,'x,'D)                                                       
+                                                                                
+                                                                                
+   (3)  LinearOrdinaryDifferentialOperator2(DependentFunction,x,D)              
+								  Type: Domain                                                          
+					Time: 0.01 (IN) + 0.01 (OT) = 0.02 sec                                     
+laxpack := LAX(ctyp,ltyp,'t,'x,'D)                                              
+                                                                                
+                                                                                
+   (4)                                                                          
+  LaxEquation(DependentFunction,LinearOrdinaryDifferentialOperator2(DependentFu 
+  nction,x,D),t,x,D)                                                            
+								  Type: Domain                                                          
+						    Time: 0.03 (IN) = 0.03 sec                                            
+                                                                                
+L : ptyp := D()+generate(functionStream(u,[],['x,'t],-1,-1),-1)                 
+                                                                                
+                                                                                
+	           - 1      - 2                                                        
+   (5)  D + u   ()D    + O(D   )                                                
+	     - 1                                                                       
+		       Type: PseudoDifferentialOperator(DependentFunction,x,D)                
+			    Time: 1.00 (IN) + 0.61 (EV) + 1.70 (OT) = 3.31 sec                       
+                                                                                
+B : NonNegativeInteger -> ltyp                                                  
+                                                                                
+								    Type: Void                                                          
+						    Time: 0.01 (IN) = 0.01 sec                                            
+B := n +-> pos(L**n)$ptyp                                                       
+                                                                                
+                                                                                
+   (7)  theMap(Closure,502)                                                     
+ Type: (NonNegativeInteger -> LinearOrdinaryDifferentialOperator2(DependentFunct
+ion,x,D))                                                                       
+					Time: 0.37 (IN) + 0.33 (OT) = 0.70 sec                                     
+                                                                                
+evalZakharovShabat(B,2,3)$laxpack                                               
+                                                                                
+                                                                                
+    (8)                                                                         
+      (- 3u       () + 3u      () - 6u     ())D - u         () + 3u        ()   
+	   - 1,x,x       - 1,t        - 2,x        - 1,x,x,x       - 1,x,t             
+			      2                                           2                          
+    +                                                                           
+      - 3u       () - 2u      () + 6u   ()u     () + 3u      ()                 
+	  - 2,x,x       - 1,t        - 1   - 1,x       - 2,t                           
+			     3                              2                                        
+	      Type: LinearOrdinaryDifferentialOperator2(DependentFunction,x,D)         
+			    Time: 0.06 (IN) + 1.32 (EV) + 0.25 (OT) = 1.63 sec                       
+                                                                                
+)spool                                                                          
+                                                                                
+-- *********************************                                            
+-- ***** Input File: NLS.input *****                                            
+-- *********************************                                            
+)clear all                                                                      
+                                                                                
+)load INDFUN                                                                    
+)load DEPFUN                                                                    
+)load CHDER                                                                     
+)load SLMD                                                                      
+)load LODO2                                                                     
+)load LAX                                                                       
+                                                                                
+)set message time on                                                            
+)spool NLS.output                                                               
+                                                                                
+ctyp:=Complex DependentFunction()                                               
+ltyp:=LinearOrdinaryDifferentialOperator2(ctyp,'x,'D)                           
+mtyp:=SquareMatrix(2,ltyp)                                                      
+laxpack:=LaxEquation(ctyp,mtyp,'t,'x,'D)                                        
+                                                                                
+u:ctyp:=function('u,['x,'t])                                                    
+uq:ctyp:=function('uq,['x,'t])                                                  
+d:ltyp:=D()                                                                     
+k:ctyp:=K                                                                       
+                                                                                
+L:mtyp:=matrix [[%i*(1+k)*d,uq],[u,%i*(1-k)*d]]                                 
+M:mtyp:=matrix [[%i*k*d**2-%i*u*uq/(1+k),differentiate(uq,x)], _                
+                [-differentiate(u,x),%i*k*d**2+%i*u*uq/(1-k)]]                  
+evalLax(L,M)$laxpack                                                            
+                                                                                
+)spool                                                                          
+)set message time off                                                           
+                                                                                
+-- ***********************************                                          
+-- ***** Output File: NLS.output *****                                          
+-- ***********************************                                          
+Starts dribbling to NLS.output (1993/12/1, 7:33:5).                             
+                                                                                
+ctyp:=Complex DependentFunction()                                               
+                                                                                
+                                                                                
+   (1)  Complex DependentFunction                                               
+                                                                 Type: Domain   
+                                                   Time: 0.01 (IN) = 0.01 sec   
+ltyp:=LinearOrdinaryDifferentialOperator2(ctyp,'x,'D)                           
+                                                                                
+                                                                                
+   (2)  LinearOrdinaryDifferentialOperator2(Complex DependentFunction,x,D)      
+                                                                 Type: Domain   
+                                       Time: 0.01 (IN) + 0.01 (OT) = 0.02 sec   
+mtyp:=SquareMatrix(2,ltyp)                                                      
+                                                                                
+                                                                                
+   (3)                                                                          
+  SquareMatrix(2,LinearOrdinaryDifferentialOperator2(Complex DependentFunction, 
+  x,D))                                                                         
+                                                                 Type: Domain   
+                                       Time: 0.01 (IN) + 0.12 (OT) = 0.13 sec   
+laxpack:=LaxEquation(ctyp,mtyp,'t,'x,'D)                                        
+                                                                                
+                                                                                
+   (4)                                                                          
+  LaxEquation(Complex DependentFunction,SquareMatrix(2,LinearOrdinaryDifferenti 
+  alOperator2(Complex DependentFunction,x,D)),t,x,D)                            
+                                                                 Type: Domain   
+                                       Time: 0.02 (IN) + 0.02 (OT) = 0.04 sec   
+                                                                                
+u:ctyp:=function('u,['x,'t])                                                    
+                                                                                
+                                                                                
+   (5)  u(x,t)                                                                  
+                                              Type: Complex DependentFunction   
+                           Time: 1.15 (IN) + 0.19 (EV) + 1.67 (OT) = 3.01 sec   
+uq:ctyp:=function('uq,['x,'t])                                                  
+                                                                                
+                                                                                
+   (6)  uq(x,t)                                                                 
+                                              Type: Complex DependentFunction   
+                                       Time: 0.17 (IN) + 0.02 (OT) = 0.19 sec   
+d:ltyp:=D()                                                                     
+                                                                                
+                                                                                
+   (7)  D                                                                       
+     Type: LinearOrdinaryDifferentialOperator2(Complex DependentFunction,x,D)   
+                           Time: 0.08 (IN) + 0.06 (EV) + 0.31 (OT) = 0.45 sec   
+k:ctyp:=K                                                                       
+                                                                                
+                                                                                
+   (8)  K                                                                       
+                                              Type: Complex DependentFunction   
+                           Time: 0.44 (IN) + 0.83 (OT) + 1.11 (GC) = 2.38 sec   
+                                                                                
+L:mtyp:=matrix [[%i*(1+k)*d,uq],[u,%i*(1-k)*d]]                                 
+                                                                                
+                                                                                
+        +(K + 1)%i D     uq(x,t)   +                                            
+   (9)  |                          |                                            
+        +  u(x,t)     (- K + 1)%i D+                                            
+Type: SquareMatrix(2,LinearOrdinaryDifferentialOperator2(Complex DependentFun   
+ction,x,D))                                                                     
+                           Time: 2.40 (IN) + 0.21 (EV) + 0.84 (OT) = 3.45 sec   
+M:mtyp:=matrix [[%i*k*d**2-%i*u*uq/(1+k),differentiate(uq,x)], _                
+                [-differentiate(u,x),%i*k*d**2+%i*u*uq/(1-k)]]                  
+                                                                                
+                                                                                
+         +      2   u(x,t)uq(x,t)                               +               
+         |K %i D  - ------------- %i          uq  (x,t)         |               
+         |              K + 1                   ,1              |               
+   (10)  |                                                      |               
+         |                                  2   u(x,t)uq(x,t)   |               
+         |        - u  (x,t)          K %i D  - ------------- %i|               
+         +           ,1                             K - 1       +               
+Type: SquareMatrix(2,LinearOrdinaryDifferentialOperator2(Complex DependentFun   
+ction,x,D))                                                                     
+                           Time: 0.83 (IN) + 0.89 (EV) + 1.10 (OT) = 2.82 sec   
+evalLax(L,M)$laxpack                                                            
+                                                                                
+                                                                                
+   (11)                                                                         
+                     2                                 2                        
+                   (K  - 1)uq    (x,t) - 2u(x,t)uq(x,t)                         
+                             ,1,1                                               
+   [[0,uq  (x,t) + ------------------------------------- %i],                   
+         ,2                        2                                            
+                                  K  - 1                                        
+                    2                         2                                 
+                (- K  + 1)u    (x,t) + 2u(x,t) uq(x,t)                          
+                           ,1,1                                                 
+    [u  (x,t) + -------------------------------------- %i,0]]                   
+      ,2                         2                                              
+                                K  - 1                                          
+Type: SquareMatrix(2,LinearOrdinaryDifferentialOperator2(Complex DependentFun   
+ction,x,D))                                                                     
+               Time: 0.05 (IN) + 1.87 (EV) + 0.31 (OT) + 1.12 (GC) = 3.35 sec   
+                                                                                
+)spool                                                                          
+                                                                                
+REF. IN COMP. PHYS. COMMUN. 79 (1994) 329                               ACPX0000
+                                                                        ACPX****

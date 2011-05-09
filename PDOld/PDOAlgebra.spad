@@ -1,0 +1,224 @@
+                                                                                
+-- *********************************                                            
+-- ***** File: PDOAlgebra.spad *****                                            
+-- *********************************                                            
+--                                                                              
+-- Various algebraic operations with pseudo differential operators.             
+-- Especially division and roots.                                               
+--                                                                              
+-- (C) 1993  Werner M. Seiler                                                   
+--                                                                              
+                                                                                
+)abb package PDOALG     PDOAlgebra                                              
+                                                                                
+                                                                                
+I    ==> Integer                                                                
+Sy   ==> Symbol                                                                 
+K    ==> Kernel CoefDom                                                         
+LC   ==> List CoefDom                                                           
+LK   ==> List K                                                                 
+LS   ==> List Sy                                                                
+SC   ==> Stream CoefDom                                                         
+INDF ==> IndexedFunction CoefDom                                                
+LLC  ==> List LC                                                                
+LLK  ==> List LK                                                                
+NNI  ==> NonNegativeInteger                                                     
+UPC  ==> SparseUnivariatePolynomial CoefDom                                     
+PDC  ==> UnivariatePolynomial(DOp,CoefDom)                                      
+SMP  ==> SparseMultivariatePolynomial(I,K)                                      
+PDO  ==> PseudoDifferentialOperator(CoefDom,DVar,DOp)                           
+LODO ==> LinearOrdinaryDifferentialOperator2(CoefDom,DVar,DOp)                  
+PDR  ==> PartialDifferentialRing Sy                                             
+FSI  ==> Join(FunctionSpace I, AlgebraicallyClosedFunctionSpace I)              
+                                                                                
+SMin ==> minIndex([1$CoefDom]::SC)                                              
+SLen ==> _$streamCount$Lisp                                                     
+                                                                                
+                                                                                
+-- ------------------- --                                                       
+-- PDOAlgebra (PDOALG) --                                                       
+-- ------------------- --                                                       
+                                                                                
+PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where                                 
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiomType{PDOAlgebra} contains various algebraic operations               
+  ++ with PDOs, especially division and roots.                                  
+  ++                                                                            
+                                                                                
+  CoefDom  : Join(PDR,FSI)                                                      
+  DVar,DOp : Sy                                                                 
+                                                                                
+                                                                                
+  Cat ==> with                                                                  
+                                                                                
+                                                                                
+    genericPDO : (Sy,LC,I) -> PDO                                               
+      ++ \axiom{genericPDO(s,arg,n)} generates a PDO of order \axiom{n}         
+      ++ with undetermined coefficients represented indexed functions           
+      ++ with name \axiom{s} and argument list \axiom{arg}.                     
+                                                                                
+    inv : PDO -> PDO                                                            
+      ++ \axiom{inv(p)} computes the inverse of the PDO \axiom{p}.              
+                                                                                
+    ldiv : (PDO,PDO) -> PDO                                                     
+      ++ \axiom{ldiv(p,q)} performs left division of two PDOs.                  
+                                                                                
+    rdiv : (PDO,PDO) -> PDO                                                     
+      ++ \axiom{rdiv(p,q)} performs right division of two PDOs.                 
+                                                                                
+    nthRoot : PDC -> PDO                                                        
+      ++ \axiom{nthRoot(p)} computes the \axiom{n}-th root of a polynomial in   
+      ++ \axiom{DOp} where \axiom{n} is the degree of \axiom{p}.                
+                                                                                
+    nthRoot : LODO -> PDO                                                       
+      ++ \axiom{nthRoot(l)} computes the \axiom{n}-th root of a LODO where      
+      ++ \axiom{n} is the order of the operator \axiom{l}.                      
+                                                                                
+    nthRoot : (PDO,NNI) -> PDO                                                  
+      ++ \axiom{nthRoot(p,n)} computes the \axiom{n}-th root of the PDO         
+      ++ \axiom{p}. \axiom{n} must divide the order of \axiom{p}.               
+                                                                                
+                                                                                
+  Def ==> add                                                                   
+                                                                                
+    -- ----------------------------------- --                                   
+    -- Solving streams of linear equations --                                   
+    -- ----------------------------------- --                                   
+                                                                                
+    addSol(LSol:LLC,newSol:CoefDom):LLC ==                                      
+      -- Adds the new solution newSol to the list LSol.                         
+      -- Adds the next needed derivatives.                                      
+      -- LSol has always a triagonal structure with one corner missing          
+      --    [[f0,f1],[f0',f1'],[f0''],[]].                                      
+      -- addSol(...,f2) yields                                                  
+      --    [[f0,f1,f2],[f0',f1',f2'],[f0'',f1''],[f0'''],[]]                   
+      -- Called by solveStream.                                                 
+      empty? LSol => [[newSol], [differentiate(newSol,DVar)], empty()]          
+      l1 := first LSol                                                          
+      l2 := second LSol                                                         
+      fun := last l2                                                            
+      newLSol:LLC := [concat(l1,newSol),_                                       
+                      concat(l2,differentiate(newSol,DVar))]                    
+      oldLSol := rest rest LSol                                                 
+      for l in oldLSol repeat                                                   
+        newLSol := concat(newLSol, concat(l,differentiate(fun,DVar)))           
+        if not empty? l then                                                    
+          fun := last l                                                         
+      concat(newLSol,empty()$LC)                                                
+                                                                                
+                                                                                
+    addName(LName:LLK,newName:K):LLK ==                                         
+      -- Adds the kernel newName to the list LName.                             
+      -- The structure of the list is identical to the one in addSol.           
+      -- Called by solveStream.                                                 
+      empty? LName => [[newName],_                                              
+                       [retract(differentiate(newName::CoefDom,DVar))], empty()]
+      l1 := first LName                                                         
+      l2 := second LName                                                        
+      fun := last(l2)::CoefDom                                                  
+      newLName:LLK := [concat(l1,newName),_                                     
+                       concat(l2,retract(differentiate(newName::CoefDom,DVar)))]
+      oldLName := rest rest LName                                               
+      for l in oldLName repeat                                                  
+        newLName := concat(newLName,_                                           
+                           concat(l,retract(differentiate(fun,DVar))))          
+        if not empty? l then                                                    
+          fun := last(l)::CoefDom                                               
+      concat(newLName,empty()$LK)                                               
+                                                                                
+                                                                                
+    solveStream1(sym:Sy,k:I,args:LC,sfun:LLK,sol:LLC,g:SC):SC ==                
+      -- Solves streams of linear equations as they occur in products           
+      -- of PDOs, if the right factor is an unknown PDO. The first              
+      -- element of g is solved for sym_k(args).                                
+      delay                                                                     
+        empty? g => empty()                                                     
+        fun := numer eval(frst g,concat sfun,concat sol)$CoefDom                
+        var := function(sym,k,args)$INDF                                        
+        vark:K := retract var                                                   
+        md := monicDivide(fun,vark::SMP,vark)                                   
+        res := - (md.remainder::CoefDom)/(md.quotient::CoefDom)                 
+        nsfun := addName(sfun,vark)                                             
+        nsol := addSol(sol,res)                                                 
+        concat(res, solveStream1(sym,k-1,args,nsfun,nsol,rst g))                
+                                                                                
+                                                                                
+    solveStream2(sym:Sy,k:I,args:LC,sfun:LK,sol:LC,g:SC):SC ==                  
+      -- Like solveStream1, but with the unknown PDO as left factor.            
+      -- Hence, no derivatives are needed.                                      
+      delay                                                                     
+        fun := numer eval(first g,sfun,sol)$CoefDom                             
+        var := function(sym,k,args)$INDF                                        
+        vark:K := retract var                                                   
+        md := monicDivide(fun,vark::SMP,vark)                                   
+        res := - (md.remainder::CoefDom)/(md.quotient::CoefDom)                 
+        concat(res,solveStream2(sym,k-1,args,cons(vark,sfun),_                  
+                                cons(res,sol),rest g))                          
+                                                                                
+                                                                                
+    -- ------------ --                                                          
+    -- Generic PDOs --                                                          
+    -- ------------ --                                                          
+                                                                                
+    genericStream(s:Sy,arg:LC,n:I):SC ==                                        
+      -- Stream of indexed functions with name s and arguments arg.             
+      -- Called by genericPDO.                                                  
+      delay                                                                     
+        concat(function(s,n,arg)$INDF, genericStream(s,arg,n-1))                
+                                                                                
+                                                                                
+    genericPDO(s:Sy,arg:LC,deg:I):PDO ==                                        
+      generate(genericStream(s,arg,deg),deg)                                    
+                                                                                
+                                                                                
+    -- -------- --                                                              
+    -- Division --                                                              
+    -- -------- --                                                              
+                                                                                
+    inv(p:PDO):PDO ==                                                           
+      -- We don't need arguments for the functions in the ansatz, because       
+      -- we compute the left inverse. Thus no derivatives are taken.            
+      sym:Sy := new()                                                           
+      n := -order p                                                             
+      cond := coefficients(genericPDO(sym,empty(),n)*p-1$PDO)                   
+      generate(solveStream2(sym,n,empty(),empty(),empty(),cond),n)              
+                                                                                
+                                                                                
+    ldiv(p:PDO,q:PDO):PDO == p*inv(q)                                           
+                                                                                
+                                                                                
+    rdiv(p:PDO,q:PDO):PDO == inv(q)*p                                           
+                                                                                
+                                                                                
+    -- ----- --                                                                 
+    -- Roots --                                                                 
+    -- ----- --                                                                 
+                                                                                
+    nthRoot(p:PDO,n:NNI):PDO ==                                                 
+      -- The order of the ansatz is order(p) quo n.                             
+      -- The ansatz yields an (in general) infinite system of equations.        
+      -- This system is already in echelon form, all equations but the first    
+      -- are linear. They are solved by solveStream.                            
+      m := order p                                                              
+      not zero?(m rem n) => error("root not defined")                           
+      ord := m quo n                                                            
+      sym:Sy := new()                                                           
+      args:LC := [DVar::CoefDom]                                                
+      cond := coefficients(p-genericPDO(sym,args,ord)**n)                       
+      sfun1:K := retract(function(sym,ord,args)$INDF)                           
+      pol:UPC := monomial(1,n)-monomial(coefficient(p,m),0)                     
+      sol1 := zeroOf pol            -- solution of first equation               
+      ss := solveStream1(sym,ord-1,args,_                                       
+               [[sfun1],[retract(differentiate(sfun1::CoefDom,DVar))],empty()],_
+               [[sol1],[differentiate(sol1,DVar)],empty()],rest cond)           
+      generate(cons(sol1,ss),ord)                                               
+                                                                                
+                                                                                
+    nthRoot(p:PDC):PDO == nthRoot(p::PDO,degree p)                              
+                                                                                
+                                                                                
+    nthRoot(l:LODO):PDO == nthRoot(l::PDO,degree l)                             
+                                                                                
+

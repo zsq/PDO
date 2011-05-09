@@ -1,0 +1,300 @@
+-- *****************************                                                
+-- ***** File: DepFun.spad *****                                                
+-- *****************************                                                
+--                                                                              
+-- Functions which are formally dependent on some variables although            
+-- they do not appear explicitly in their argument list. Allows also            
+-- dependencies on indexed variables.                                           
+--                                                                              
+--                                                                              
+-- (C) 1993  Werner M. Seiler                                                   
+--                                                                              
+                                                                                
+)abb domain DEPFUN DependentFunction                                            
+                                                                                
+                                                                                
+B    ==> Boolean                                                                
+L    ==> List                                                                   
+I    ==> Integer                                                                
+NNI  ==> NonNegativeInteger                                                     
+OUT  ==> OutputForm                                                             
+Sy   ==> Symbol                                                                 
+EI   ==> Expression Integer                                                     
+K    ==> Kernel $                                                               
+LS   ==> L $                                                                    
+ST   ==> Stream $                                                               
+LSy  ==> L Sy                                                                   
+BOP  ==> BasicOperator                                                          
+BOPF ==> BasicOperatorFunctions1 $                                              
+SMP  ==> SparseMultivariatePolynomial(I,K)                                      
+INDF ==> IndexedFunction $                                                      
+                                                                                
+                                                                                
+-- -------------------------- --                                                
+-- DependentFunction (DEPFUN) --                                                
+-- -------------------------- --                                                
+                                                                                
+DependentFunction() : Cat == Def where                                          
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiomType{DependentFunction} implements functions which depend            
+  ++ formally on arguments which do not occur explicitly in their               
+  ++ arguments. The dependency is declared at the generation of the             
+  ++ function. As dependency on indexed variables is also allowed, it           
+  ++ is possible to introduce functions with an infinite number of              
+  ++ arguments.                                                                 
+  -- The domain is based on \axiomType{Expression Integer}. Only the            
+  -- differentiation is newly implemented.                                      
+  --                                                                            
+                                                                                
+  Cat ==> Join(FunctionSpace I, AlgebraicallyClosedFunctionSpace I,             
+               TranscendentalFunctionCategory, CombinatorialOpsCategory,        
+               LiouvillianFunctionCategory, SpecialFunctionCategory) with       
+                                                                                
+                                                                                
+    coerce : EI -> $                                                            
+    coerce : $ -> EI                                                            
+                                                                                
+    function : (Sy,LS) -> $                                                     
+      ++ \axiom{function(f,arg)} generates a kernel representing a function     
+      ++ with the name \axiom{f} and the arguments \axiom{arg}.                 
+                                                                                
+    function : (Sy,LS,LSy) -> $                                                 
+      ++ \axiom{function(f,arg,dep)} generates a kernel representing a          
+      ++ function with the name \axiom{f} and the arguments \axiom{arg}         
+      ++ which depends implicitly on the variables \axiom{dep}.                 
+                                                                                
+    functionStream : (Sy,LS,I,I) -> ST                                          
+      ++ \axiom{functionStream(u,arg,n,d)} generates a stream of kernels        
+      ++ representing functions with arguments \axiom{arg}. The names of        
+      ++ functions are indexed beginning with \axiom{u_n} incrementing          
+      ++ each step by \axiom{d}.                                                
+                                                                                
+    functionStream : (Sy,LS,LSy,I,I) -> ST                                      
+      ++ \axiom{functionStream(u,arg,dep,n,d)} generates a stream of kernels    
+      ++ representing functions with arguments \axiom{arg} which depend         
+      ++ implictly on the variables \axiom{dep}. The names of functions are     
+      ++ indexed beginning with \axiom{u_n} incrementing each step by           
+      ++ \axiom{d}.                                                             
+                                                                                
+    indexedDiff : ($,Sy) -> $                                                   
+      ++ \axiom{implicitDiff(f,x)} differentiates the expression \axiom{f}      
+      ++ with respect to the indexed variable \axiom{x}. It yields \axiom{0},   
+      ++ if \axiom{f} contains no functions depending on the name of \axiom{x}. 
+      ++ Hard error, if \axiom{x} is not indexed!                               
+                                                                                
+    indexedDiff : ($,Sy,NNI) -> $                                               
+      ++ \axiom{differentiate(f,x,n)} differentiates \axiom{f} \axiom{n}-times  
+      ++ with respect to the indexed variable \axiom{x}.                        
+                                                                                
+  Def ==> EI add                                                                
+                                                                                
+    depDiff ==> "%depDiff"                                                      
+    spDiff  ==> "%specialDiff"                                                  
+    spDisp  ==> "%specialDisp"                                                  
+                                                                                
+    -- -------------- --                                                        
+    -- Representation --                                                        
+    -- -------------- --                                                        
+                                                                                
+    Rep := EI                                                                   
+                                                                                
+                                                                                
+    coerce(e:EI):$ == e                                                         
+                                                                                
+                                                                                
+    coerce(e:$):EI == e@Rep                                                     
+                                                                                
+                                                                                
+    function(f:Sy,arg:LS):$ ==                                                  
+      fun := operator(f)$BOP                                                    
+      elt(fun,arg)                                                              
+                                                                                
+                                                                                
+    function(f:Sy,arg:LS,dep:LSy):$ ==                                          
+      fun := operator(f)$BOP                                                    
+      fun := setProperty(fun,depDiff,dep pretend None)                          
+      elt(fun,arg)                                                              
+                                                                                
+                                                                                
+    functionStream(f:Sy,arg:LS,n:I,d:I):ST ==                                   
+      delay                                                                     
+        fsc := scripts f                                                        
+        if empty? fsc.sub then                                                  
+          fsc.sub := [n::OUT]                                                   
+        else                                                                    
+          fsc.sub := append(fsc.sub,[";"::OUT,n::OUT])                          
+        fs := script(name f, fsc)                                               
+        concat(function(fs,arg),functionStream(f,arg,n+d,d))                    
+                                                                                
+                                                                                
+    functionStream(f:Sy,arg:LS,dep:LSy,n:I,d:I):ST ==                           
+      delay                                                                     
+        fsc := scripts f                                                        
+        if empty? fsc.sub then                                                  
+          fsc.sub := [n::OUT]                                                   
+        else                                                                    
+          fsc.sub := append(fsc.sub,[";"::OUT,n::OUT])                          
+        fs := script(name f, fsc)                                               
+        concat(function(fs,arg,dep),functionStream(f,arg,dep,n+d,d))            
+                                                                                
+                                                                                
+    -- --------------- --                                                       
+    -- Differentiation --                                                       
+    -- --------------- --                                                       
+                                                                                
+    -- This is basically a copy of the differentiation procedures               
+    -- in Expression Integer. Only in kerderiv some new lines are               
+    -- included which check for implicit dependencies and in dispdiff           
+    -- the slot "level" was eliminated, as now all derivatives are shown        
+    -- as suffices.                                                             
+                                                                                
+    gendiff := "%%13"::Sy                                                       
+    opdiff := operator("%diff"::Sy)$CommonOperators()                           
+                                                                                
+                                                                                
+    symsub(sy:Sy,i:I):Sy ==                                                     
+      concat(string sy, convert(i)@String)::Sy                                  
+                                                                                
+                                                                                
+    dispdiff(l:LS):Record(name:OUT,sub:OUT,arg:L OUT) ==                        
+      s := second(l)::OUT                                                       
+      t := third(l)::OUT                                                        
+      a := argument(k := retract(first(l))@K)                                   
+      is?(k,opdiff) =>                                                          
+        rec := dispdiff a                                                       
+        i := position(s,rec.arg)                                                
+        rec.arg.i := t                                                          
+        [rec.name,                                                              
+           hconcat(rec.sub, _                                                   
+                   hconcat(","::Sy::OUT,(i+1-minIndex a)::OUT)), rec.arg]       
+      i := position(second l, a)                                                
+      m := [x::OUT  for x in a]$L(OUT)                                          
+      m.i := t                                                                  
+      [name(operator k)::OUT, hconcat(","::Sy::OUT,(i+1-minIndex a)::OUT), m]   
+                                                                                
+                                                                                
+    ddiff(l:LS):OUT ==                                                          
+      rec := dispdiff l                                                         
+      opname := sub(rec.name,rec.sub)                                           
+      prefix(opname,rec.arg)                                                    
+                                                                                
+                                                                                
+    substArg(op:BOP,l:LS,i:I,g:$):$ ==                                          
+      z := copy l                                                               
+      z.i := g                                                                  
+      kernel(op,z)                                                              
+                                                                                
+                                                                                
+    diffdiff(l:LS,x:Sy):$ ==                                                    
+      k:K := retract first l                                                    
+      op := operator k                                                          
+      gg := second l                                                            
+      u := third l                                                              
+      args := argument k                                                        
+      ans := differentiate(u,x)*_                                               
+               kernel(opdiff, [kernel(opdiff, [first l, gg, gg]), gg, u])       
+      for i in minIndex(args)..maxIndex(args)  for b in args repeat             
+        if (bp := differentiate(b,x)) ^= 0 then                                 
+          g := symsub(gendiff,i)::$                                             
+          ans := ans + _                                                        
+                   bp*kernel(opdiff, _                                          
+                        [kernel(opdiff,[substArg(op,args,i,g),gg,u]), g, b])    
+      ans                                                                       
+                                                                                
+                                                                                
+    dfeval(l:LS,g:K):$ ==                                                       
+      eval(differentiate(first l, symbolIfCan(g)::Sy), g, third l)              
+                                                                                
+                                                                                
+    diffEval(l:LS):$ ==                                                         
+      g := retract(second l)@K                                                  
+      (u := retractIfCan(first l)@Union(K,"failed")) case "failed" =>           
+        dfeval(l,g)                                                             
+      op := operator(k:=u::K)                                                   
+      (ud := derivative(op)$BOPF) case "failed" => kernel(opdiff,l)             
+      (n := position(second l, argument k)) < minIndex l => dfeval(l,g)         
+      d := ud:: L (LS -> $)                                                     
+      eval((d.n)(argument k), g, third l)                                       
+                                                                                
+                                                                                
+    evaluate(opdiff,diffEval)$BOPF                                              
+    setProperty(opdiff,spDiff,diffdiff@((LS,Sy) -> $) pretend None)$BOP         
+    setProperty(opdiff,spDisp,ddiff@(LS -> OUT) pretend None)$BOP               
+                                                                                
+                                                                                
+    diffArg(l:List($),op:BOP,i:NNI):LS ==                                       
+      n := i-1+minIndex(l)                                                      
+      z := copy l                                                               
+      z.n := (g := symsub(gendiff,n)::$)                                        
+      [kernel(op,z), g, l.n]                                                    
+                                                                                
+                                                                                
+    opderiv(op:BOP,n:NNI): L (LS -> $) ==                                       
+      one? n =>                                                                 
+        [kernel(opdiff,[kernel(op,gendiff::$), gendiff::$, first #1])]          
+      [kernel(opdiff, diffArg(#1, op, i))  for i in 1..n]                       
+                                                                                
+                                                                                
+    kderiv(k:K):LS ==                                                           
+      zero?(n := #(args := argument k)) => empty()                              
+      op := operator k                                                          
+      grad :=                                                                   
+        (u := derivative(op)$BOPF) case "failed" => opderiv(op,n)               
+        u :: L (LS -> $)                                                        
+      if #grad ^= n then grad := opderiv(op,n)                                  
+      [g(args)  for g in grad]                                                  
+                                                                                
+                                                                                
+    implicitDep(op:BOP,x:Sy,index?:B):B ==                                      
+      (dep := property(op,depDiff)) case "failed" => false                      
+      index? => member?(name x, dep pretend LSy)                                
+      member?(x,dep pretend LSy)                                                
+                                                                                
+                                                                                
+    kerderiv(k:K,x:Sy,index?:B):$ ==                                            
+      (v := symbolIfCan(k)) case Sy =>                                          
+        v::Sy = x => 1                                                          
+        0                                                                       
+      op := operator k                                                          
+      (fn := property(op,spDiff)) case None =>                                  
+        ((fn::None) pretend ((LS,Sy) -> $))(argument k, x)                      
+      implicitDep(op,x,index?) =>                                               
+        sy := name op                                                           
+        ssc := scripts sy                                                       
+        ssc.sub := append(ssc.sub,[x::OUT])                                     
+        sy := script(name sy, ssc)                                              
+        newop := operator sy                                                    
+        newop := setProperties(newop, properties op)                            
+        elt(newop, argument k)                                                  
+      reduce("+", [g*differentiate(y,x)  for g in kderiv(k) _                   
+                                         for y in argument(k)], 0)              
+                                                                                
+                                                                                
+    smpderiv(p:SMP,x:Sy,index?:B):$ ==                                          
+      reduce("+", [differentiate(p,k)::$*kerderiv(k,x,index?) _                 
+                   for k in variables p], 0)                                    
+                                                                                
+                                                                                
+    differentiate(f:$,x:Sy):$ ==                                                
+      nf := numer f                                                             
+      df := denom f                                                             
+      (smpderiv(nf,x,false)*(df::$)-smpderiv(df,x,false)*(nf::$))/(df**2)::$    
+                                                                                
+                                                                                
+    indexedDiff(f:$,x:Sy):$ ==                                                  
+      not indexedVariable?(x)$INDF =>                                           
+        error("Differentiation with respect to indexed variables only")         
+      nf := numer f                                                             
+      df := denom f                                                             
+      (smpderiv(nf,x,true)*(df::$)-smpderiv(df,x,true)*(nf::$))/(df**2)::$      
+                                                                                
+                                                                                
+    indexedDiff(f:$,x:Sy,n:NNI):$ ==                                            
+      g := f                                                                    
+      for i in 1..n repeat                                                      
+        g := indexedDiff(g,x)                                                   
+      g                                                                         
+                                                                                
+

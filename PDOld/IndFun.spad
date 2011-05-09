@@ -1,0 +1,67 @@
+                                                                                
+-- *****************************                                                
+-- ***** File: IndFun.spad *****                                                
+-- *****************************                                                
+--                                                                              
+-- (Indexed) functions for generic expressions                                  
+--                                                                              
+--                                                                              
+-- (C) 1993  Werner M. Seiler                                                   
+--                                                                              
+                                                                                
+)abb package  INDFUN    IndexedFunction                                         
+                                                                                
+                                                                                
+B   ==> Boolean                                                                 
+Sy  ==> Symbol                                                                  
+I   ==> Integer                                                                 
+LF  ==> List FunSpace                                                           
+BOP ==> BasicOperator                                                           
+OUT ==> OutputForm                                                              
+FSI ==> FunctionSpace I                                                         
+K   ==> Kernel FunSpace                                                         
+                                                                                
+-- ------------------------ --                                                  
+-- IndexedFunction (INDFUN) --                                                  
+-- ------------------------ --                                                  
+                                                                                
+IndexedFunction(FunSpace:FSI) : Cat == Def where                                
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiomType{IndexedFunction} implements procedures to generate indexed      
+  ++ functions and variables with a given name for generic expressions in the   
+  ++ domain \axiom{FunSpace}. The arguments of the functions stem also from this
+  ++ domain.                                                                    
+  ++                                                                            
+                                                                                
+  Cat ==> with                                                                  
+                                                                                
+    variable : (Sy,I) -> Sy                                                     
+      ++ \axiom{variable(s,n)} generates the indexed variable                   
+      ++ \axiom{s_n}.                                                           
+                                                                                
+    function : (Sy,I,LF) -> FunSpace                                            
+      ++ \axiom{function(s,n,arg)} generates an indexed function                
+      ++ with name \axiom{s_n} and argument list \axiom{arg}.                   
+                                                                                
+    indexedVariable? : Sy -> B                                                  
+      ++ \axiom{indexedVariable?(s)} checks whether \axiom{s} is an indexed     
+      ++ variable,  i.e. the only script is an index.                           
+                                                                                
+                                                                                
+  Def ==> add                                                                   
+                                                                                
+    variable(s:Sy,n:I):Sy == subscript(s,[n::OUT])                              
+                                                                                
+                                                                                
+    function(s:Sy,n:I,arg:LF):FunSpace ==                                       
+      op := operator(subscript(s,[n::OUT])$Sy)$BOP                              
+      elt(op,arg)$FunSpace                                                      
+                                                                                
+                                                                                
+    indexedVariable?(s:Sy):B ==                                                 
+      ssc := scripts s                                                          
+      #(ssc.sub)=1 and empty? ssc.sup and empty? ssc.presub and _               
+        empty? ssc.presup and empty? ssc.args                                   
+

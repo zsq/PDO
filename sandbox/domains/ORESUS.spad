@@ -1,0 +1,31 @@
+-- Univariate Skew Series Domain
+
+)abb domain ORESUS UnivariateSkewSeries
+
+B   ==>	Boolean
+I   ==> Integer
+NNI ==> NonNegativeInteger
+INF ==> OrderedCompletion I
+Sy  ==> Symbol
+LS  ==> List Sy
+BOP ==> BasicOperator
+OUT ==> OutputForm
+LC  ==> List R
+SC  ==> Stream R
+
+-- SLen ==> _$streamCount$Lisp
+-- SMin ==> minIndex([1$R]::SC)
+
+
+UnivariateSkewSeries(R:Ring, sigma:Automorphism R, delta: R -> R) : Exports == Implementation where
+
+    Exports == Join(Ring, BiModule(R, R)) with
+
+	coerce : (R) -> %
+
+    Implementation == add
+    
+	Rep := Record(coef:SC, hi: I, lo: INF)
+
+	coerce(r:R):% == [[r]::SC, 0, 0::INF]
+	

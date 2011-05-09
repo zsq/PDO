@@ -1,0 +1,33 @@
+)clear all                                                                      
+                                                                                
+)read INDFUN                                                                    
+)read DEPFUN                                                                    
+)read CHDER                                                                     
+)read SLMD                                                                      
+)read LODO2                                                                     
+)read PDO                                                                       
+)read PDOALG                                                                    
+)read LAX                                                                       
+)read LAXH                                                                      
+                                                                                
+)set message time on                                                            
+)spool KdV.output                                                               
+)set stream calculate 5                                                         
+                                                                                
+ctyp:=DependentFunction()                                                       
+ltyp:=LinearOrdinaryDifferentialOperator2(ctyp,'x,'D)                           
+ptyp:=PseudoDifferentialOperator(ctyp,'x,'D)                                    
+algpack:=PDOAlgebra(ctyp,'x,'D)                                                 
+laxpack:=LaxEquation(ctyp,ltyp,'t,'x,'D)                                        
+laxhpack:=LaxHierarchy(ctyp,'t,'x,'D)                                           
+                                                                                
+u:ctyp:=function('u,['x,'t])                                                    
+L:ltyp:=D()**2+u                                                                
+M:ptyp:=nthRoot(L)$algpack                                                      
+evalLax(L,pos(M**3))$laxpack                                                    
+conservedDensities(M)$laxhpack                                                  
+                                                                                
+)spool                                                                          
+)set message time off                                                           
+                                                                                
+

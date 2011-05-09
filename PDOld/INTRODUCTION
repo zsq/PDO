@@ -1,0 +1,21 @@
+ACPXPDO.  PSEUDO DIFFERENTIAL OPERATORS AND INTEGRABLE SYSTEMS IN AXIOM.ACPX0000
+1   W.M. SEILER.                                                        ACPX0000
+CPC FREE FORMAT DATA 1833 CARDS                                         ACPX    
+-- ************************                                                     
+-- ***** INSTRUCTIONS *****                                                     
+-- ************************                                                     
+                                                                                
+-- This file contains the program files and the complete test deck.             
+-- It must be split into different files to be used. The splitting I            
+-- use is indicated by comments surrounded by *****. It divides the             
+-- program into the files                                                       
+--     IndFun.spad, DepFun.spad, LODO2.spad, Pseudo.spad                        
+--     PDOAlgebra.spad                                                          
+-- They should be compiled in this order with the )comp command.                
+-- The test deck contains for three complete examples (KdV, KP, NLS)            
+-- the input and the output files. They can be read into AXIOM with             
+-- the )r command. The input files contain already )spool commands              
+-- which should generate the same output as the provided output files.          
+                                                                                
+--                          Werner M. Seiler  (1.12.93)                         
+

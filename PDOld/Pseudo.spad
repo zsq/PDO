@@ -1,0 +1,554 @@
+-- *****************************                                                
+-- ***** File: Pseudo.spad *****                                                
+-- *****************************                                                
+--                                                                              
+-- Implementation of Pseudodifferential operators.                              
+-- Designed for use in calculations in integrable systems theory.               
+--                                                                              
+--                                                                              
+-- (C) 1993  Werner M. Seiler                                                   
+--                                                                              
+                                                                                
+)abb domain     PDO     PseudoDifferentialOperator                              
+                                                                                
+B    ==> Boolean                                                                
+I    ==> Integer                                                                
+NNI  ==> NonNegativeInteger                                                     
+INF  ==> OrderedCompletion I                                                    
+Sy   ==> Symbol                                                                 
+LS   ==> List Sy                                                                
+BOP  ==> BasicOperator                                                          
+OUT  ==> OutputForm                                                             
+PDR  ==> PartialDifferentialRing Sy                                             
+LC   ==> List CoefDom                                                           
+PC   ==> UnivariatePolynomial(DOp,CoefDom)                                      
+SC   ==> Stream CoefDom                                                         
+SP   ==> Stream $                                                               
+LODO ==> LinearOrdinaryDifferentialOperator2(CoefDom,DVar,DOp)                  
+SSC  ==> Stream SC                                                              
+                                                                                
+SLen ==> _$streamCount$Lisp                                                     
+SMin ==> minIndex([1$CoefDom]::SC)                                              
+                                                                                
+                                                                                
+-- -------------------------------- --                                          
+-- PseudoDifferentialOperator (PDO) --                                          
+-- -------------------------------- --                                          
+                                                                                
+PseudoDifferentialOperator(CoefDom:PDR,DVar:Sy,DOp:Sy) : Cat == Def where       
+                                                                                
+  ++                                                                            
+  ++ Description:                                                               
+  ++ \axiomType{PseudoDifferentialOperator} implements the basic algebraic      
+  ++ properties of PDOs. The differentiation operator \axiom{DOp} denotes       
+  ++ differentiation wrt \axiom{DVar}.                                          
+  -- The PDOs are represented as a series in DOp with an index range from       
+  -- lopow to hipow, where lopow can be infinite.                               
+  -- The internal data structure is a record [coef,hipow,lopow].                
+  -- Caution: No cyclic streams should be used as they may cause infinite loops!
+  --                                                                            
+                                                                                
+                                                                                
+  Cat ==> Join(Ring,BiModule(CoefDom,CoefDom),PDR,_                             
+               RetractableTo PC,RetractableTo LODO) with                        
+                                                                                
+                                                                                
+    generate : (SC,I) -> $                                                      
+      ++ \axiom{generate(sc,n)} generates a PDO of order \axiom{n}              
+      ++ from a stream \axiom{sc} of coefficients.                              
+                                                                                
+    generate : (LC,I) -> $                                                      
+      ++ \axiom{generate(lc,n)} generates a finite PDO of order \axiom{n}       
+      ++ from a list \axiom{lc} of coefficients.                                
+                                                                                
+    D : () -> $                                                                 
+      ++ \axiom{D()} yields the differential operator \axiom{DOp}.              
+                                                                                
+    pos : $ -> PC                                                               
+      ++ \axiom{pos(p)} computes the positive part of the PDO \axiom{p}.        
+                                                                                
+    neg : $ -> $                                                                
+      ++ \axiom{neg(p)} computes the negative part of the PDO \axiom{p}.        
+                                                                                
+    order : $ -> I                                                              
+      ++ \axiom{order(p)} yields the highest exponent occuring in \axiom{p}.    
+                                                                                
+    minOrder : $ -> INF                                                         
+      ++ \axiom{minOrder(p)} yields the lowest exponent occuring in \axiom{p}.  
+                                                                                
+    coerce : CoefDom -> $                                                       
+      ++ \axiom{coerce(c)} coerces a coefficient to a constant PDO.             
+                                                                                
+    coefficient : ($,I) -> CoefDom                                              
+      ++ \axiom{coefficient(p,n)} yields the coefficient of \axiom{DOp**n}.     
+                                                                                
+    residue : $ -> CoefDom                                                      
+      ++ \axiom{residue(p)} yields the coefficient of \axiom{DOp**(-1)}.        
+                                                                                
+    coefficients : $ -> SC                                                      
+      ++ \axiom{coefficients(p)} yields the stream of the coefficients of       
+      ++ the PDO \axiom{p}.                                                     
+                                                                                
+    explicitlyFinite? : $ -> $                                                  
+      ++ \axiom{explicitlyFinite?(p)} checks explicitly, whether \axiom{p} is   
+      ++ finite. May cause explicit computation of more coefficients.           
+                                                                                
+    repeatedMult : ($,$) -> SP                                                  
+      ++ \axiom{repeatedMult(p,q)} yields the stream of products                
+      ++ \axiom{[p,p*q,p*q**2,...]}.                                            
+                                                                                
+    finiteMult : ($,$) -> $                                                     
+      ++ \axiom{finiteMult(p,q)} is like ordinary multiplication but with a     
+      ++ check whether the result is finite.                                    
+                                                                                
+    finiteDifferentiate : ($,Sy) -> $                                           
+      ++ \axiom{finiteDifferentiate(p,x)} is like ordinary differentiation      
+      ++ but with a check for finiteness of the result.                         
+                                                                                
+    commutator : ($,$) -> $                                                     
+      ++ \axiom{commutator(p,q)} yields \axiom{p*q-q*p}.                        
+                                                                                
+    if CoefDom has (with indexedDiff : (CoefDom,Sy) -> CoefDom) then            
+                                                                                
+      indexedDiff : ($,Sy) -> $                                                 
+        ++ \axiom{indexedDiff(p,v)} differentiates all coefficients of          
+        ++ \axiom{p} with respect to the indexed variable \axiom{v}.            
+                                                                                
+    if CoefDom has (with "/" : (CoefDom,CoefDom) -> CoefDom) then               
+                                                                                
+      "/" : ($,CoefDom) -> $                                                    
+        ++ \axiom{p/c} divides all coefficients of \axiom{p} by \axiom{c}.      
+                                                                                
+                                                                                
+  Def ==> add                                                                   
+                                                                                
+    import StreamTaylorSeriesOperations CoefDom                                 
+                                                                                
+    -- -------------- --                                                        
+    -- Representation --                                                        
+    -- -------------- --                                                        
+                                                                                
+    Rep := Record(coef:SC,hipow:I,lopow:INF)                                    
+                                                                                
+                                                                                
+    generate(c:SC,deg:I):$ ==                                                   
+      explicitlyFinite? c => [c,deg,(deg-#entries(c)+1)::INF]                   
+      [c,deg,minusInfinity()]                                                   
+                                                                                
+                                                                                
+    generate(l:LC,deg:I):$ == [l::SC,deg,(deg-#l+1)::INF]                       
+                                                                                
+                                                                                
+    D():$ == [[1$CoefDom]::SC,1,1]                                              
+                                                                                
+                                                                                
+    pos(x:$):PC ==                                                              
+      n := x.hipow                                                              
+      cs:SC := x.coef                                                           
+      n<0$I or empty? cs => 0$PC                                                
+      if infinite?(x.lopow) or (retract(x.lopow)<=0$I) then                     
+        j:NNI := 0                                                              
+      else                                                                      
+        j := retract(x.lopow)::NNI                                              
+      cs := extend(cs,n-j+1)                                                    
+      reduce("+",[monomial(cs.(i+SMin),(n-i)::NNI)$PC for i in j..n],0)         
+                                                                                
+                                                                                
+    neg(x:$):$ ==                                                               
+      n := x.hipow                                                              
+      n<0$I => x                                                                
+      finite?(m:=x.lopow) and retract(m)>=0$I => 0$$                            
+      cs := x.coef                                                              
+      for i in 0..n repeat                                                      
+        cs := rest cs                                                           
+      [cs,-1,x.lopow]                                                           
+                                                                                
+                                                                                
+    order(x:$):I == x.hipow                                                     
+                                                                                
+                                                                                
+    minOrder(x:$):INF == x.lopow                                                
+                                                                                
+                                                                                
+    coefficient(x:$,i:I):CoefDom ==                                             
+      i>(n:=order x) => 0                                                       
+      k := n-i                                                                  
+      xc := extend(x.coef,k+SMin)                                               
+      explicitlyFinite?(xc) and (k>=#entries xc) => 0                           
+      x.coef.(k+SMin)                                                           
+                                                                                
+                                                                                
+    residue(x:$):CoefDom == coefficient(x,-1)                                   
+                                                                                
+                                                                                
+    coefficients(x:$):SC == x.coef                                              
+                                                                                
+                                                                                
+    coerce(c:CoefDom):$ == [[c]::SC,0,0::INF]                                   
+                                                                                
+                                                                                
+    coerce(p:PC):$ ==                                                           
+      -- due to the strange implementation of coefficients, we cannot           
+      -- use a simple coerce                                                    
+      -- [coefficients(p)::SC,degree p,minimumDegree(p)::INF]                   
+      mind := minimumDegree p                                                   
+      maxd := degree p                                                          
+      l:LC := [coefficient(p,i) for i in mind..maxd]                            
+      [reverse(l)::SC,maxd,mind::INF]                                           
+                                                                                
+                                                                                
+    coerce(l:LODO):$ == coerce(l::PC)$$                                         
+      -- [coefficients(l)::SC,degree l,minimumDegree(l)::INF]                   
+                                                                                
+                                                                                
+    retractIfCan(x:$):Union(PC,"failed") ==                                     
+      x.lopow<0 => "failed"                                                     
+      pos x                                                                     
+                                                                                
+                                                                                
+    retractIfCan(x:$):Union(LODO,"failed") ==                                   
+      x.lopow<0 => "failed"                                                     
+      reduce("+",[monomial(coefficient(x,i),i::NNI)$LODO _                      
+                  for i in retract(x.lopow)..x.hipow],0)                        
+                                                                                
+                                                                                
+    explicitlyFinite?(x:$):$ ==                                                 
+      -- checks for finiteness by explicitly computing the first SLen elements  
+      -- returns x with may be lopow changed                                    
+      y := extend(x.coef,SLen)                                                  
+      possiblyInfinite? y => [y,x.hipow,x.lopow]                                
+      [y,x.hipow,(x.hipow-numberOfComputedEntries(y)+1)::INF]                   
+                                                                                
+                                                                                
+    -- ----------- --                                                           
+    -- Output Form --                                                           
+    -- ----------- --                                                           
+                                                                                
+    monom(c:CoefDom,n:I):OUT ==                                                 
+      -- output of a monom in DOp                                               
+      -- called by polynom                                                      
+      n=0 => c::OUT                                                             
+      res := DOp::OUT                                                           
+      if not(n=1) then                                                          
+        res := res ** n::OUT                                                    
+      if not one? c then                                                        
+        res := c::OUT * res                                                     
+      res                                                                       
+                                                                                
+                                                                                
+    polynom(ls:LC,n:I):OUT ==                                                   
+      -- output of a polynom in DOp                                             
+      -- called by coerce                                                       
+      lt := ls                                                                  
+      erg:List OUT := empty()                                                   
+      i:NNI                                                                     
+      for i in 0.. while not empty?(lt) repeat                                  
+        c := first(lt)                                                          
+        if not zero? c then                                                     
+          erg:=cons(monom(c,n-i),erg)                                           
+        lt := rest lt                                                           
+      empty? erg => 0$I ::OUT                                                   
+      #erg=1 => first erg                                                       
+      reduce("+",reverse_! erg)                                                 
+                                                                                
+                                                                                
+    coerce(x:$):OUT ==                                                          
+      -- output of a PDO                                                        
+      -- for possibly infinite PDOs the order of possible further               
+      -- terms is indicated                                                     
+      empty?(cs:=x.coef) => 0$CoefDom::OUT                                      
+      cs := extend(cs,SLen)                                                     
+      explicitlyFinite? cs => polynom(entries cs,x.hipow)                       
+      polynom([cs.i for i in SMin..SLen],x.hipow) + _                           
+        prefix("O"::OUT,[DOp::OUT ** (x.hipow-SLen-SMin+1)::OUT])               
+                                                                                
+    -- --------------- --                                                       
+    -- Local Functions --                                                       
+    -- --------------- --                                                       
+                                                                                
+    move(x:SC,n:NNI):SC ==                                                      
+      -- Adds n leading zeros.                                                  
+      -- Called by "+".                                                         
+      insert([0$CoefDom for i in 1..n]::SC,x,1)                                 
+                                                                                
+                                                                                
+    cutHead(x:$):$ ==                                                           
+      -- Erases leading zeros in coefficient stream.                            
+      -- Called by "+" and differentiate.                                       
+      cs := x.coef                                                              
+      count := 0$NNI                                                            
+      while not empty?(cs) and zero? frst(cs) and (count<=SLen) repeat          
+        cs := rst cs                                                            
+        count := count+1                                                        
+      empty? cs => 0                                                            
+      [cs,x.hipow-count,x.lopow]                                                
+                                                                                
+                                                                                
+    cutTail(x:$):$ ==                                                           
+      -- Erases trailing zeros in coefficient stream of finite PDOs.            
+      -- Called by "+".                                                         
+      infinite?(x.lopow) => x                                                   
+      n := (x.hipow-retract(x.lopow)+SMin)::NNI                                 
+      cs:LC :=  [x.coef.i for i in SMin..n]                                     
+      while last(cs)=0 repeat                                                   
+        n := (n-1)::NNI                                                         
+        cs := first(cs,n)                                                       
+      [cs::SC,x.hipow,(x.hipow-n+SMin)::INF]                                    
+                                                                                
+                                                                                
+    gamma(m:I,i:NNI):I ==                                                       
+      -- Generalized binomial coefficient (m is allowed to be negative).        
+      -- Called by alpha.                                                       
+      i=0 => 1                                                                  
+      i=1 => m                                                                  
+      */[k::I for k in m-i+1 .. m] quo */[k::I for k in 2..i]                   
+                                                                                
+                                                                                
+    zeroStream?(z:SC,n:I):B ==                                                  
+      -- Checks whether z is a finite stream containing only zeros.             
+      -- For this purpose, the first n coefficients of z are computed.          
+      -- Called by finiteCollectDiffStream and finiteDifferentiate.             
+      y := copy z                                                               
+      y := extend(y,n)                                                          
+      possiblyInfinite? y => false                                              
+      until empty? y repeat                                                     
+        not zero? frst y => return false                                        
+        y := rst y                                                              
+      true                                                                      
+                                                                                
+                                                                                
+    diffStream(var:Sy,f:SC):SC ==                                               
+      -- Differentiates a stream wrt var.                                       
+      -- Called by collectDiffStream and differentiate.                         
+      delay                                                                     
+        empty? f => empty()                                                     
+        concat(differentiate(frst f,var),diffStream(var,rst f))                 
+                                                                                
+                                                                                
+    collectDiffStream(var:Sy,f:SC):SSC ==                                       
+      -- Each element stream is the derivative of the preceeding one.           
+      -- Called by "*".                                                         
+      delay                                                                     
+        df := diffStream(var,f)                                                 
+        concat(f,collectDiffStream(var,df))                                     
+                                                                                
+                                                                                
+    finiteCollectDiffStream(var:Sy,f:SC):SSC ==                                 
+      -- Like collectDiffStream, but with check for finiteness.                 
+      -- Called by finiteMult.                                                  
+      delay                                                                     
+        df := diffStream(var,f)                                                 
+        zeroStream?(df,numberOfComputedEntries f) => [f]::SSC                   
+        concat(f,collectDiffStream(var,df))                                     
+                                                                                
+                                                                                
+    -- ------------------------- --                                             
+    -- Simple Algebra Operations --                                             
+    -- ------------------------- --                                             
+                                                                                
+    0 : $ == [[0$CoefDom]::SC,0,0$INF]                                          
+                                                                                
+                                                                                
+    1 : $ == [[1$CoefDom]::SC,0,0$INF]                                          
+                                                                                
+                                                                                
+    x:$ = y:$  == (x.hipow=y.hipow) and (x.lopow=y.lopow) and (x.coef=y.coef)   
+                                                                                
+                                                                                
+    x:$ + y:$ ==                                                                
+      -- Makes use of procedures for Taylor series.                             
+      n := x.hipow - y.hipow                                                    
+      h := max(x.hipow,y.hipow)                                                 
+      l := min(x.lopow,y.lopow)                                                 
+      if n>=0 then                                                              
+        res := x.coef + move(y.coef,n::NNI)                                     
+      else                                                                      
+        res := move(x.coef,(-n)::NNI) + y.coef                                  
+      infinite? l => cutHead [res,h,l]                                          
+      cutTail cutHead [extend(res,h-retract(l)+1),h,l]                          
+                                                                                
+                                                                                
+    - x:$ == [- x.coef,x.hipow,x.lopow]                                         
+                                                                                
+                                                                                
+    characteristic():NNI == 0                                                   
+                                                                                
+                                                                                
+    -- ----------------------------- --                                         
+    -- Multiplication and Commutator --                                         
+    -- ----------------------------- --                                         
+                                                                                
+    -- The main problem of multiplication is to detect, whether the result      
+    -- is a finite PDO. This happens exactly when both factors are finite       
+    -- and all coefficients are polynomial, e.g. possess only a finite number   
+    -- of nonvanishing derivatives.                                             
+    -- There is a special procedure finiteMult, which checks for finiteness     
+    -- of its result. It is less efficient than the normal product, since       
+    -- it must perform several checks which require to extend streams beyond    
+    -- the otherwise needed number of explicitly computed entries.              
+    -- In the present implementation, finiteMult computes always SLen           
+    -- coefficients of the product. If this yields no finite result, lopow      
+    -- is set to minusInfinity. If later due to further (lazy) evaluation       
+    -- finiteness of the result is detected, lopow cannot be changed. This      
+    -- requires an explicit call of explicitlyFinite?                           
+                                                                                
+    alpha(k:I,m0:I,xh:I,imax:I,yl:INF,yh:I,xc:SC,ydc:SSC):CoefDom ==            
+      -- k-th coefficient of x*y resp. finiteMult(x,y).                         
+      -- Called by multStream and finiteMultStream.                             
+      m:I                                                                       
+      n:I                                                                       
+      res:CoefDom := 0                                                          
+      for m in m0..xh repeat                                                    
+        xm := xc.(xh-m+SMin)                                                    
+        if not zero? xm then                                                    
+          n0 := k-m                                                             
+          if finite? yl then                                                    
+            n0 := max(n0,retract(yl))                                           
+          if (m>0) and (yh>k) then                                              
+            n1 := k                          -- for greater n g vanishes        
+          else                                                                  
+            n1 := yh                                                            
+          sum:CoefDom := 0                                                      
+          for n in n0..n1 until i>imax repeat                                   
+            i := (m+n-k)::NNI                                                   
+            g := gamma(m,i)                                                     
+            if not zero? g then                                                 
+              sum := sum+g*ydc.(i+SMin).(yh-n+SMin)                             
+          res := res+xm*sum                                                     
+      res                                                                       
+                                                                                
+                                                                                
+    multStream(k:I,xl:INF,xh:I,yl:INF,yh:I,xc:SC,ydc:SSC):SC ==                 
+      -- generates stream of coefficients for x*y                               
+      -- called by "*"                                                          
+      delay                                                                     
+        m0 := k-yh                                                              
+        if finite? xl then                                                      
+          m0 := max(m0,retract(xl))                                             
+        imax := xh+yh-k                       -- highest needed derivative      
+        h := alpha(k,m0,xh,imax,yl,yh,xc,ydc)                                   
+        concat(h,multStream(k-1,xl,xh,yl,yh,xc,ydc))                            
+                                                                                
+                                                                                
+    finiteMultStream(k:I,xl:INF,xh:I,yl:INF,yh:I,xc:SC,ydc:SSC):SC ==           
+      -- generates stream of coefficients for finiteMult(x,y)                   
+      -- called by finiteMult                                                   
+      delay                                                                     
+        m0 := k-yh                                                              
+        if finite? xl then                                                      
+          m0 := max(m0,retract(xl))                                             
+        imax := xh+yh-k                       -- highest needed derivative      
+        extend(ydc,imax+1)                    -- compute needed derivatives     
+        while less?(ydc,(imax+1)::NNI) repeat -- find highest nonvanishing one  
+          imax := imax-1                                                        
+        finite?(yl) and (imax<m0+max(k-m0,retract(yl))-k) => empty()            
+        h := alpha(k,m0,xh,imax,yl,yh,xc,ydc)                                   
+        concat(h,finiteMultStream(k-1,xl,xh,yl,yh,xc,ydc))                      
+                                                                                
+                                                                                
+    x:$ * y:$ ==                                                                
+      n := x.hipow+y.hipow                                                      
+      res := multStream(n,x.lopow,x.hipow,y.lopow,y.hipow,_                     
+                        x.coef,collectDiffStream(DVar,y.coef))                  
+      [res,n,minusInfinity()]                                                   
+                                                                                
+                                                                                
+    finiteMult(x:$,y:$):$ ==                                                    
+      -- Multiplication with check for finiteness.                              
+      -- Computes always at least SLen terms.                                   
+      n := x.hipow+y.hipow                                                      
+      res := finiteMultStream(n,x.lopow,x.hipow,y.lopow,y.hipow,_               
+                              x.coef,finiteCollectDiffStream(DVar,y.coef))      
+      extend(res,SLen)                                                          
+      possiblyInfinite? res => [res,n,minusInfinity()]                          
+      [res,n,(n-numberOfComputedEntries(res)+1)::INF]                           
+                                                                                
+                                                                                
+    repeatedMultStream(x:$,y:$,ydc:SSC):SP ==                                   
+      -- Generates stream of successive products.                               
+      delay                                                                     
+        n := x.hipow+y.hipow                                                    
+        res := [multStream(n,x.lopow,x.hipow,y.lopow,y.hipow,x.coef,ydc),_      
+                n,minusInfinity()]                                              
+        concat(res,repeatedMultStream(res,y,ydc))                               
+                                                                                
+                                                                                
+    repeatedMult(x:$,y:$):SP ==                                                 
+      -- This procedure is provided for efficency reasons.                      
+      -- Performed by successive calls of *, each time the derivatives of       
+      -- the right factor would have to be computed again.                      
+      ydc := collectDiffStream(DVar,y.coef)                                     
+      concat(x,repeatedMultStream(x,y,ydc))                                     
+                                                                                
+                                                                                
+    c:CoefDom * x:$ == [c * x.coef,x.hipow,x.lopow]                             
+                                                                                
+                                                                                
+    n:I * x:$ == (n::CoefDom) * x                                               
+                                                                                
+                                                                                
+    x:$ * c:CoefDom == x * c::$                                                 
+                                                                                
+                                                                                
+    commutator(x:$,y:$):$ == x*y - y*x                                          
+                                                                                
+    -- -------- --                                                              
+    -- Division --                                                              
+    -- -------- --                                                              
+                                                                                
+    -- Principally, we can define a division as soon as we can divide in        
+    -- CoefDom. The only problem is to set up equations over CoefDom. The       
+    -- only simple way requires a coerce either from IndexedFunction            
+    -- or from Expression Integer to CoefDom. Hence, it is implemented          
+    -- in a separate package PDOAlgebra.                                        
+                                                                                
+    recip(x:$):Union($,"failed") ==                                             
+      "failed"                                                                  
+                                                                                
+                                                                                
+    if CoefDom has (with "/" : (CoefDom,CoefDom) -> CoefDom) then               
+                                                                                
+      divStream(z:SC,c:CoefDom):SC ==                                           
+        -- Division of each coefficients.                                       
+        -- Called by "/".                                                       
+        delay                                                                   
+          empty? z => empty()                                                   
+          concat(frst(z)/c, divStream(rst z,c))                                 
+                                                                                
+                                                                                
+      x:$ / c:CoefDom ==                                                        
+        zero? c => error "Division by 0"                                        
+        [divStream(x.coef,c),x.hipow,x.lopow]                                   
+                                                                                
+                                                                                
+                                                                                
+    -- --------------- --                                                       
+    -- Differentiation --                                                       
+    -- --------------- --                                                       
+                                                                                
+    differentiate(x:$,s:Sy):$ ==                                                
+      cs := diffStream(s,x.coef)                                                
+      cutHead [cs,x.hipow,x.lopow]                                              
+                                                                                
+                                                                                
+    finiteDifferentiate(x:$,s:Sy):$ ==                                          
+      -- Differentiation with check for finiteness.                             
+      -- Computes always at least SLen terms.                                   
+      cs := diffStream(s,x.coef)                                                
+      zeroStream?(cs,SLen) => 0$$                                               
+      cutHead [cs,x.hipow,x.lopow]                                              
+                                                                                
+                                                                                
+    if CoefDom has (with indexedDiff : (CoefDom,Sy) -> CoefDom) then            
+                                                                                
+      indexedDiffStream(var:Sy,f:SC):SC ==                                      
+        -- Differentiates a stream wrt an indexed variable var.                 
+        -- Called by differentiate.                                             
+        delay                                                                   
+          empty? f => empty()                                                   
+          concat(indexedDiff(frst f,var), indexedDiffStream(var,rst f))         
+                                                                                
+                                                                                
+      indexedDiff(x:$,v:Sy):$ ==                                                
+        cs := indexedDiffStream(v,x.coef)                                       
+        cutHead [cs,x.hipow,x.lopow]                                            
