@@ -1,0 +1,64 @@
+\documentclass{article}
+\usepackage{axiom}
+\begin{document}
+\title{\$SPAD/src/algebra integer.spad}
+\author{James Davenport}
+\maketitle
+\begin{abstract}
+\end{abstract}
+\eject
+\tableofcontents
+\eject
+\section{package Cdomain}
+
+<<package CODMAIN Cdomain>>=
+)abbrev package CDOMAIN Cdomain
+++ Author: Davenport
+++ Date Created: 1991
+++ Date Last Updated:
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+++ This package provides the implementation for the
+++ \spadfun{solveLinearPolynomialEquation}
+++ operation over the integers. It uses a lifting technique
+++ from the package GenExEuclid
+
+Cdomain(): C==T
+ where
+    c == with
+           ++ solveLinearPolynomialEquation([f1, ..., fn], g)
+           ++ (where the fi are relatively prime to each other)
+           ++ returns a list of ai such that
+           ++ \spad{g/prod fi = sum ai/fi}
+           ++ or returns "failed" if no such list of ai's exists.
+        chunDomain:(INT,INT) -> INT
+    T == add
+        chunDomain(a,b)==
+            a*b
+
+<<domain INT Integer>>=
+)abbrev domain MYDM myDo
+
+myDo Join(IntegerNumberSystem, ConvertibleTo String, OpenMath,_
+    Canonical, canonicalsClosed) with
+
+    random : % -> %
+== add
+
+      x + y == (x*y)$Lisp
+
+<<domain MYDM myDo>>
+
+<<package CODMAIN Cdomain>>
+
+
+\eject
+\begin{thebibliography}{99}
+\bibitem{1} nothing
+\end{thebibliography}
+\end{document}
