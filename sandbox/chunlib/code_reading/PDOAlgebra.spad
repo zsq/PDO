@@ -136,6 +136,7 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
       -- Called by solveStream.                                                 
       empty? LName => [[newName],_                                              
                        [retract(differentiate(newName::CoefDom,DVar))], empty()]
+	  --若相等则初始化结构
       l1 := first LName                                                         
       l2 := second LName                                                        
       fun := last(l2)::CoefDom                                                  
@@ -148,6 +149,7 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
         if not empty? l then                                                    
           fun := last(l)::CoefDom                                               
       concat(newLName,empty()$LK)                                               
+	  --基本结构和上一个函数相同 但?????具体功能??????????
                                                                                 
                                                                                 
     solveStream1(sym:Sy,k:I,args:LC,sfun:LLK,sol:LLC,g:SC):SC ==                
@@ -161,9 +163,11 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
         vark:K := retract var                                                   
         md := monicDivide(fun,vark::SMP,vark)                                   
         res := - (md.remainder::CoefDom)/(md.quotient::CoefDom)                 
+		--求解   ????具体数学含义?????
         nsfun := addName(sfun,vark)                                             
         nsol := addSol(sol,res)                                                 
         concat(res, solveStream1(sym,k-1,args,nsfun,nsol,rst g))                
+		--使用递归方式 将结果整合到结果列表中
                                                                                 
                                                                                 
     solveStream2(sym:Sy,k:I,args:LC,sfun:LK,sol:LC,g:SC):SC ==                  
@@ -186,12 +190,16 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
     genericStream(s:Sy,arg:LC,n:I):SC ==                                        
       -- Stream of indexed functions with name s and arguments arg.             
       -- Called by genericPDO.                                                  
+	  -- ???? Indexed Function 为何????
       delay                                                                     
         concat(function(s,n,arg)$INDF, genericStream(s,arg,n-1))                
+		--使用递归 中间函数  ??????具体功能??????
                                                                                 
                                                                                 
     genericPDO(s:Sy,arg:LC,deg:I):PDO ==                                        
+	--通用 PDO
       generate(genericStream(s,arg,deg),deg)                                    
+	  --产生一个空的PDO???????
                                                                                 
                                                                                 
     -- -------- --                                                              
@@ -203,8 +211,12 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
       -- we compute the left inverse. Thus no derivatives are taken.            
       sym:Sy := new()                                                           
       n := -order p                                                             
+	  -- 就n复制为p的负次  形成被除数分之一的效果
       cond := coefficients(genericPDO(sym,empty(),n)*p-1$PDO)                   
+	  -- sym:Sy   empty():LC  n:I
       generate(solveStream2(sym,n,empty(),empty(),empty(),cond),n)              
+
+	  --????此处算法完全不懂????
                                                                                 
                                                                                 
     ldiv(p:PDO,q:PDO):PDO == p*inv(q)                                           
@@ -212,6 +224,7 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
                                                                                 
     rdiv(p:PDO,q:PDO):PDO == inv(q)*p                                           
                                                                                 
+    --左右除
                                                                                 
     -- ----- --                                                                 
     -- Roots --                                                                 
@@ -223,8 +236,10 @@ PDOAlgebra(CoefDom,DVar,DOp) : Cat == Def where
       -- This system is already in echelon form, all equations but the first    
       -- are linear. They are solved by solveStream.                            
       m := order p                                                              
+	  --p的次
       not zero?(m rem n) => error("root not defined")                           
       ord := m quo n                                                            
+	  -- rem quo ??????---
       sym:Sy := new()                                                           
       args:LC := [DVar::CoefDom]                                                
       cond := coefficients(p-genericPDO(sym,args,ord)**n)                       
