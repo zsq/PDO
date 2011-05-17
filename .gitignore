@@ -1,0 +1,9 @@
+.DS_Store
+libdb.text
+
+
+*~
+*.swp
+*.swo
+
+*.NRLIB/

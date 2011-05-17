@@ -31,6 +31,16 @@ UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, delta: R -> R) : 
 	generate: (LC,I) -> %
 	    ++ \axiom{generate(lc,n) generates a skew series of order \axiom{n}
 	    ++ from a list \axiom{lc} of coefficients.
+	
+	order: (%) -> I
+	    ++ \axiom{order(s)} yields the highest exponent occuring in \axiom{s}
+
+	coefficient: (%, I) -> R
+	    ++ \axiom{coefficient(s,i)} yields the coefficient of \axiom{DOp^i}.
+
+	coefficients: (%) -> SC
+	    ++ \axiom{coefficients(s)} yields the stream of the coefficients of the 
+	    ++ Skew Series.
 
 	explicitlyFinite? : % -> %
 	    ++ \axiom{explicitlyFinite?(s)} checks explicitly, whether \axiom{s} is 
@@ -58,7 +68,18 @@ UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, delta: R -> R) : 
 	    [t, s.hi, s.lo-(numberOfComputedEntries(t)+1)::INF]
 	    -- numberOfComputedEntries returns the number of terms which has been explicitly computed
 	    -- before this call.
- 
+	
+	order(s:%) : I == s.hi 
+
+	coefficients(s:%): SC == s.coef
+
+	coefficient(s:%, i:I): R ==
+	    i>(n:= order s) => 0
+	    k := n-i
+	    xc := extend(s.coef, k+SMin)
+	    explicitlyFinite?(xc) and (k>= #entries xc) => 0
+	    s.coef.(k+SMin)
+	    	
 
 	-- Output Form --
 
