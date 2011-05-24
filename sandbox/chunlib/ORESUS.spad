@@ -1,0 +1,183 @@
+-- Univariate Skew Series Domain
+
+)abb domain ORESUS UnivariateSkewSeries
+
+B   ==>	Boolean
+I   ==> Integer
+NNI ==> NonNegativeInteger
+INF ==> OrderedCompletion I
+Sy  ==> Symbol
+LS  ==> List Sy
+BOP ==> BasicOperator
+OUT ==> OutputForm
+LC  ==> List R
+SC  ==> Stream R
+
+SLen ==> _$streamCount$Lisp
+SMin ==> minIndex([1$R]::SC)
+
+
+UnivariateSkewSeries(R:Ring, Var:Symbol, sigma:Automorphism R, delta: R -> R) : Exports == Implementation where
+
+    Exports == Join(Ring, BiModule(R, R)) with
+
+	coerce : (R) -> %
+	    ++ \axiom{coerce(r)} converts an element of \axiom{Ring} into a Skew Series
+	    
+	generate: (SC,I) -> %
+	    ++ \axiom{generate(sc,n) generates a Skew Series of order \axiom{n}
+	    ++ from a stream \axiom{sc} of coefficients.
+
+	generate: (LC,I) -> %
+	    ++ \axiom{generate(lc,n) generates a skew series of order \axiom{n}
+	    ++ from a list \axiom{lc} of coefficients.
+	
+	order: (%) -> I
+	    ++ \axiom{order(s)} yields the highest exponent occuring in \axiom{s}
+
+	coefficient: (%, I) -> R
+	    ++ \axiom{coefficient(s,i)} yields the coefficient of \axiom{DOp^i}.
+
+	coefficients: (%) -> SC
+	    ++ \axiom{coefficients(s)} yields the stream of the coefficients of the 
+	    ++ Skew Series.
+
+	explicitlyFinite? : % -> %
+	    ++ \axiom{explicitlyFinite?(s)} checks explicitly, whether \axiom{s} is 
+	    ++ finite. May cause explicit computation of more coefficients.
+
+    Implementation == add
+    
+	Rep := Record(coef:SC, hi: I, lo: INF)
+
+	coerce(r:R):% == [[r]::SC, 0, 0::INF]
+	
+	generate(s:SC, deg:I):% == 
+	    explicitlyFinite? s => [s, deg, (deg-#entries(s)+1)::INF]
+	    [s, deg, minusInfinity()]
+
+	generate(l:LC, deg:I):% == [l::SC, deg, (deg-#l+1)::INF]
+
+	explicitlyFinite? (s:%): % == 
+	    -- Checks for finiteness by explicitly computing the first system specific
+	    -- value SLen elements, return finite stream with finite low power if possiblyInfinite?
+	    -- returns "false"
+	    t := extend(s.coef, SLen)
+	    -- Cause the first SLen elements of the stream to be computed, returns computed stream.
+	    possiblyInfinite? t => [t, s.hi, s.lo]		    
+	    [t, s.hi, s.lo-(numberOfComputedEntries(t)+1)::INF]
+	    -- numberOfComputedEntries returns the number of terms which has been explicitly computed
+	    -- before this call.
+	
+	order(s:%) : I == s.hi 
+
+	coefficients(s:%): SC == s.coef
+
+	coefficient(s:%, i:I): R ==
+	    i>(n:= order s) => 0
+	    k := n-i
+	    xc := extend(s.coef, k+SMin)
+	    explicitlyFinite?(xc) and (k>= #entries xc) => 0
+	    s.coef.(k+SMin)
+	    	
+
+	-- Output Form --
+
+	monom(r:R, n: I):OUT == 
+	    -- Output of a monom 
+	    -- Called by polynom
+	    n=0 => r::OUT
+	    res := Var::OUT
+	    if not(n=1) then
+		res := res^n::OUT
+	    if not one? r then
+		res := r::OUT * res
+	    res	
+
+	polynom(ls:LC, n: I):OUT ==
+	    -- Output of a polynomial
+	    -- Called by coerce
+	    lt := ls
+	    erg:List OUT := empty()
+	    i:NNI
+	    for i in 0.. while not empty?(lt) repeat
+		c := first(lt)
+		if not zero? c then
+		    erg := cons(monom(c,n-i),erg)
+		lt := rest lt
+	    empty? erg => 0$I :: OUT
+	    #erg =1 => first erg
+	    reduce("+",reverse! erg)
+
+	coerce(s:%): OUT ==
+	    -- Output a Skew series
+	    -- for possibly infinite Skew series, the order of possible further
+	    -- terms is indicated
+	    empty?(cs:=s.coef) => 0$R::OUT
+	    cs := extend(cs, SLen)
+	    explicitlyFinite? cs => polynom(entries cs, s.hi)
+	    i:NNI
+	    polynom([cs.i for i in SMin..SLen],s.hi)+ prefix("O"::OUT, [Var::OUT^(s.hi-SLen-SMin+1)::OUT])
+
+    -- ----------------- --
+    -- Local Functions   --
+    -- ----------------- --
+    move(x:SC,n:NNI):SC ==                                                      
+      -- Adds n leading zeros.                                                  
+      -- Called by "+".                                                         
+      insert([0$CoefDom for i in 1..n]::SC,x,1)                                 
+                                                                                
+                                                                                
+    cutHead(x:%):% ==                                                           
+      -- Erases leading zeros in coefficient stream.                            
+      -- Called by "+" and differentiate.                                       
+      cs := x.coef                                                              
+      count := 0$NNI                                                            
+      while not empty?(cs) and zero? frst(cs) and (count<=SLen) repeat          
+        cs := rst cs                                                            
+        count := count+1                                                        
+      empty? cs => 0                                                            
+      [cs,x.hipow-count,x.lopow]                                                
+                                                                                
+                                                                                
+    cutTail(x:%):% ==                                                           
+      -- Erases trailing zeros in coefficient stream of finite PDOs.            
+      -- Called by "+".                                                         
+      infinite?(x.lopow) => x                                                   
+      n := (x.hipow-retract(x.lopow)+SMin)::NNI                                 
+      cs:LC :=  [x.coef.i for i in SMin..n]                                     
+      while last(cs)=0 repeat                                                   
+        n := (n-1)::NNI                                                         
+        cs := first(cs,n)                                                       
+      [cs::SC,x.hipow,(x.hipow-n+SMin)::INF]                                    
+
+    -- ------------------------- --                                             
+    -- Simple Algebra Operations --                                             
+    -- ------------------------- --                                             
+                                                                                
+    0 : % == [[0$CoefDom]::SC,0,0$INF]
+                                                                                
+    1 : % == [[1$CoefDom]::SC,0,0$INF]                                          
+                                                                                
+    x:% = y:%  == (x.hipow=y.hipow) and (x.lopow=y.lopow) and (x.coef=y.coef)   
+                                                                                
+    x:% + y:% ==                                                                
+      -- Makes use of procedures for Taylor series.                             
+      n := x.hipow - y.hipow                                                    
+      h := max(x.hipow,y.hipow)                                                 
+      l := min(x.lopow,y.lopow)                                                 
+      if n>=0 then                                                              
+        res := x.coef + move(y.coef,n::NNI)                                     
+      else                                                                      
+        res := move(x.coef,(-n)::NNI) + y.coef                                  
+      infinite? l => cutHead [res,h,l]                                          
+      cutTail cutHead [extend(res,h-retract(l)+1),h,l]                          
+ 
+ 
+
+
+
+
+
+	    --"O"::OUT
+
